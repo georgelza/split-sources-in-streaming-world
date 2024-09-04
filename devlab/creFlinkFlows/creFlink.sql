@@ -3,20 +3,6 @@
 -- NOTE: 
 -- Case sentivity... need to match the case as per types/fs.go structs avro sections.
 
--- The Todo
---
--- source (INPUT) the Kafka topic: avro_salesbaskets into Flink into t_k_avro_salesbaskets
--- source (INPUT) the inserted records from either MySqlDB or PostgreSQL (DB:sales, Table:salespayments) via CDC into Flink 
--- into t_f_msqlcdc_salespayments or t_f_pgcdc_salespayments
--- push either of them into flink table: t_f_salespayments, itself configured to export to Kafka Topic: avro_salespayments
--- join t_k_avro_salesbaskets and t_f_salespayments to create t_f_avro_salescompleted
--- push t_f_avro_salescompleted into Kafka topic: avro_salescompleted
--- sink (OUTPUT) t_f_avro_salescompleted into Apache Paimon table: parquet_salescompleted
--- Unnest t_f_avro_salescompleted basketitems array to t_f_unnested_sales
--- sink (OUTPUT) t_f_unnested_sales into Apache Paimon table: parquet_unnested_sales
--- push t_f_unnested_sales into Kafka topic: avro_unnested_sales
-
-
 -- Set checkpoint to happen every minute
 SET 'execution.checkpointing.interval' = '5sec';
 

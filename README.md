@@ -81,7 +81,7 @@ Without these guys and their willingness to entertain allot of questions and som
 
 ### For My Own notes: (When git does not want to work/sync failing)
     
-git push -u origin main
+```git push -u origin main```
 
 Enumerating objects: 142, done.
 Counting objects: 100% (142/142), done.
