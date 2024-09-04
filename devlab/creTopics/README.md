@@ -10,3 +10,5 @@ Make sure to populate match the "COMPOSE_PROJECT_NAME" with the value used in th
 ## For Schema Registry
 
 I used the 2 below *.sh and *.avsc (Avro Schema files) to create the schema entries for the Avro source topics.
+
+Not for the Version 2.0 of this blog we added created_at column to the avro_salespayments table. This comes from our source Mysql and Postgresql tables.
