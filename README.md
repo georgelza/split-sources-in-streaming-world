@@ -76,3 +76,25 @@ Without these guys and their willingness to entertain allot of questions and som
         VeeAM
         ()
         ?
+
+    For My Own notes:
+
+### When git does not want to work/sync failing, 
+    
+git push -u origin main
+
+Enumerating objects: 142, done.
+Counting objects: 100% (142/142), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (129/129), done.
+error: RPC failed; HTTP 400 curl 22 The requested URL returned error: 400
+send-pack: unexpected disconnect while reading sideband packet
+Writing objects: 100% (142/142), 3.67 MiB | 4.95 MiB/s, done.
+Total 142 (delta 27), reused 0 (delta 0), pack-reused 0
+fatal: the remote end hung up unexpectedly
+Everything up-to-date
+    
+    
+issue: 
+
+    git config http.postBuffer 524288000
