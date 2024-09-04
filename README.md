@@ -9,22 +9,29 @@ So in that serious I joked, this is probably not the last of the series, this is
 
 The original article had a Golang application posting 2 json documents from a fake store onto 22 Kafka topics. We did some Kafka stream processing on that. We then also dropped those 2 topics into Flink where replicated the same processing to demostrate the power of Flink, and differences when compared with Kafka. From here we pushed the data into 2 datastore solutions. First was a Apache Iceberg soluton with storage on S3. The second was into Apache Paimon with storage on Apache HDFS cluster.
 
+
 On 27 Aug 2024 - I had a chat wit a friend and got a friendly request. Let's take the original article and extend it only such a small/ little bit, Lets show the capabilities of Flink CDC to injest data. Basically, we're going to split the 2 source streams.
 
  - The salesbasket will still go onto Kafka, 
  - And then secondly, the associated Salespayments document/record will be pushed into a database (MySQL). From here will then configure Flink CDC to pull/source the data from the database and push it into a Flink Table (as per original article, avro_salespayments).
  - As per the original article we will now join the 2 streams together, created salescompleted record set.
 
- For reference see the blog-doc/diagram's folder for some diagrams depicting the flow of data.
+
+For reference see the blog-doc/diagram's folder for some diagrams depicting the flow of data.
 
 
 1. So first, I modified the app (Golang) to push the salespayments to either Kafka salespayments topic (as current) or into a salespayments table in the sales database (Mysqldb 8.x), controlled by Mysql_enabled setting in the *_app.json file.
+
 2. Next up, need to extend my Flink stack (Flink Jobserver and Taskmanager and the Flink Sql client) and add the right Flink CDC/Jar files, allowing us to configure FlinkCDC from the source salespayments table into a Flink Table (t_f_cdc_salespayments). 
-4. We will also configure Flink to push this 2nd source (salespayments) now onwards onto a Kafak topic t_f_avro_salespayments vs where we origially source data from, thus still aligning with the original Kafka topic/s.
-5. As a small scope creap, I'm going to change our Stand Alone Apache Hive Metastore into a split design of a seperate Hive Server 2 & Hive Metastore configuration backed again by a Postgresql database.
-6. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
-7. For the Analytical part we will again push the data down onto an Apache Iceberg table format using the Apache Parquet file format on MinIO/S3.
-8. I will also show (I hope) how to use DuckDB together with ParadeDB (PostgreSQl with extentions) to query the data in Apache Iceberg.
+
+3. We will also configure Flink to push this 2nd source (salespayments) now onwards onto a Kafak topic t_f_avro_salespayments vs where we origially source data from, thus still aligning with the original Kafka topic/s.
+
+4. As a small scope creap, I'm going to change our Stand Alone Apache Hive Metastore into a split design of a seperate Hive Server 2 & Hive Metastore configuration backed again by a Postgresql database.
+
+5. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
+
+6. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format on HDFS.
+
 
 Ye... I think that will be a good start, and that will accomplish what we want to demostrate, a split source environment and using Apache Flink's CDC apabilities to ingest the data from the database and push it into a Flink Table's for further processing, joining with data from i.e: Kafka sources, a more pragmatic/realistic example.
 
@@ -35,6 +42,7 @@ From here change into the devlab-hms-postgres directory and see the README.md fi
 George
 
 georgelza@gmail.com
+
 [Split Data source in a streaming solution](https://github.com/georgelza/split-sources-in-streaming-world.git)
 
 ## Credits... due.
