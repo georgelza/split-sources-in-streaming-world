@@ -77,9 +77,9 @@ Without these guys and their willingness to entertain allot of questions and som
         ()
         ?
 
-    For My Own notes:
+    
 
-### When git does not want to work/sync failing, 
+### For My Own notes: (When git does not want to work/sync failing)
     
 git push -u origin main
 
@@ -95,6 +95,4 @@ fatal: the remote end hung up unexpectedly
 Everything up-to-date
     
     
-issue: 
-
-    git config http.postBuffer 524288000
+issue:  ```git config http.postBuffer 524288000```
