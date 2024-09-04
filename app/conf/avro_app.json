@@ -1,0 +1,22 @@
+{
+    "echoConfig": 1,                                # echo this file to the terminal
+    "debuglevel": 2,                                # 0=no logging, up to 4 ull logging enabled
+    "testsize": 40000,                              # if 0 then we set it to very large value (10000000000000) to simply continue running,
+                                                    # Make the Batch_size size a factor of the testsize when Mongo inserts are enabled
+    "sleep": 150,                                   # Milliseconds, aka 5000 => 5 seconds. this mean we will sleep between 0 and 5000 between payload creates.
+                                                    # setting it to 0 disables is.
+    "vatrate": 0.14,                                # Sales tax
+    "SeedFile": "sit_seed.json",                    # File containing seed data.
+    "Store": 0,                                     # if <> 0 then this value is used to selected store at that position from file, otherwise it's random
+    "Terminals": 20,                                # Number of possible checkout points/terminals
+    "KafkaEnabled": 1,                              # Are we going to post onto Kafka,
+    "MongoAtlasEnabled": 0,                         # Are we going to post docs directly into a Mongo Atlas.
+    "MysqlEnabled": 1,                              # If this = 1 then we wil post the salespayments into Mysql and not to the Kafka topic.
+    "PgsqlEnabled": 0,                              # If this = 1 then we wil post the salespayments into PostgreSql and not to the Kafka topic.
+    "Json_to_file": 0,                              # Do we want to store basket created to a file
+    "Output_path": "json_save",                     # if to file, to what sub directory of current working directory, please pre create.
+    "TimeOffset": "+02:00",                         # local time offset from GMT/Zulu
+    "Max_items_basket": 10,                         # max items in a basket
+    "Max_quantity": 5                               # max quantity of items in a basket per product
+}
+

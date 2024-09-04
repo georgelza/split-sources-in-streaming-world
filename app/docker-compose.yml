@@ -1,0 +1,174 @@
+# docker-compose -p my-project up -d --build
+# or
+# export COMPOSE_PROJECT_NAME=my-project
+# docker-compose up -d --build
+#
+
+configs:
+  app_file:
+    file: ./conf/avro_app.json
+  seed_file:
+    file: ./conf/sit_seed.json
+  # Add _x to each of the if App running inside container, 
+  # this is so that we don't use localhost as the target host but rather the container name
+  kafka_file:
+    file: ./conf/avro_kafka.json
+  mongo_file:
+    file: ./conf/avro_mongo_x.json
+  mysql_file:
+    file: ./conf/avro_mysql.json
+  pgsql_file:
+    file: ./conf/avro_pgsql.json
+  postgres_conf:
+    file: conf/postgresql.conf
+  postgres_hba:
+    file: conf/pg_hba.conf
+
+services:
+  broker:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: broker
+    hostname: broker
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      # Replace CLUSTER_ID with a unique base64 UUID using "bin/kafka-storage.sh random-uuid" 
+      # See https://docs.confluent.io/kafka/operations-tools/kafka-tools.html#kafka-storage-sh
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.1
+    container_name: schema-registry
+    hostname: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "9081:9081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:9081
+
+
+  app:
+    image: georgelza/goprod-avro:1.1.0
+    container_name: app
+    hostname: app
+    depends_on:
+      - broker
+      - schema-registry
+      - mysqlcdc
+      - postgrescdc
+    environment:
+      SASL_USERNAME: ${SASL_USERNAME}
+      SASL_PASSWORD: ${SASL_PASSWORD}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_CDC_USER: ${POSTGRES_CDC_USER}
+      POSTGRES_CDC_PASSWORD: ${POSTGRES_CDC_PASSWORD}
+
+    configs:
+      - source: app_file
+        target: /app/conf/avro_app.json
+        mode: 444
+      - source: seed_file
+        target: /app/conf/sit_seed.json
+        mode: 444
+      - source: kafka_file
+        target: /app/conf/avro_kafka.json
+        mode: 444
+      - source: mongo_file
+        target: /app/conf/avro_mongo.json
+        mode: 444
+      - source: mysql_file
+        target: /app/conf/avro_mysql.json
+        mode: 444
+      - source: pgsql_file
+        target: /app/conf/avro_pgsql.json
+        mode: 444
+    profiles:
+      - donotstart
+
+  mysqlcdc:
+    image: mysql:8.4.2
+    hostname: mysqlcdc
+    container_name: mysqlcdc
+    volumes:
+      - ./data/mysqlcdc:/var/lib/mysql  
+      - ./sql/mysql:/docker-entrypoint-initdb.d
+    ports:
+      - ${MYSQL_HOST_PORT}:3306
+    environment:
+      MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
+    # profiles:
+    #   - donotstart
+
+  postgrescdc:
+    image: postgres:12
+    hostname: postgrescdc
+    container_name: postgrescdc
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgrescdc:/var/lib/postgresql/data
+      - ./sql/postgrescdc:/docker-entrypoint-initdb.d
+    configs:
+      - source: postgres_conf
+        target: etc/postgresql/postgresql.conf
+        mode: 444      
+      - source: postgres_hba
+        target: /etc/postgresql/pg_hba.conf
+        mode: 444     
+    # profiles:
+    #   - donotstart
+
+  # Used to test the local Kafka Connector/sinks into MongoDB or direct insert into MongoDB Collection.
+  mongodb:
+    image: mongodb/mongodb-atlas-local:7.0.5
+    hostname: mongodb
+    container_name: mongodb
+    ports:
+      - ${MONGO_HOST_PORT}:27017
+    volumes:
+      - ./data/mongodb:/data/db
+    # profiles:
+    #   - donotstart
+
+
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME}
+      
+      

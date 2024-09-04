@@ -1,0 +1,523 @@
+# docker-compose -p my-project up -d --build
+# or
+# export COMPOSE_PROJECT_NAME=my-project
+# docker-compose up -d --build
+#
+# inspect network: docker network inspect devlab
+#
+
+configs:
+  app_file:
+    file: ../app/conf/avro_app.json
+  seed_file:
+    file: ../app/conf/sit_seed.json
+  kafka_file:
+    file: ../app/conf/avro_kafka.json
+  mongo_file:
+    file: ../app/conf/avro_mongo.json
+  mysql_file:
+    file: ../app/conf/avro_mysql.json
+  pgsql_file:
+    file: ../app/conf/avro_pgsql.json
+
+  postgres_conf:
+    file: conf/postgresql.conf
+  postgres_hba:
+    file: conf/pg_hba.conf
+  mysql_conf:
+    file: conf/mysql.cnf
+
+  creCat:
+    file: creFlinkFlows/creCat.sql
+  creCdCFlink:
+    file: creFlinkFlows/creCdc.sql
+  creFlink:
+    file: creFlinkFlows/creFlink.sql
+
+  hive-site:
+    file: conf/hive-site.xml
+  flink-conf:
+    file: conf/flink-conf.yaml
+
+services:
+  # Core Confluent Kafka bits
+  broker:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: broker
+    hostname: broker
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      # Replace CLUSTER_ID with a unique base64 UUID using "bin/kafka-storage.sh random-uuid" 
+      # See https://docs.confluent.io/kafka/operations-tools/kafka-tools.html#kafka-storage-sh
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.1
+    container_name: schema-registry
+    hostname: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "9081:9081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:9081
+      
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.6.1
+    container_name: control-center
+    hostname: control-center
+    depends_on:
+      - broker
+    ports:
+      - "9021:9021"     # -> Web UI console
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: 'connect:8083'
+      CONTROL_CENTER_CONNECT_HEALTHCHECK_ENDPOINT: '/connectors'
+      CONTROL_CENTER_KSQL_KSQLDB1_URL: "http://ksqldb-server:8088"
+      CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL: "http://localhost:8088"
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:9081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+
+  connect:
+    # build:
+    #   context: .
+    #   dockerfile: connect/Dockerfile
+    image: ${REPO_NAME}/kafka-connect-custom:1.2
+    container_name: connect
+    hostname: connect
+    depends_on:
+      - broker
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:9081
+      # CLASSPATH required due to CC-2422
+      CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-7.6.1.jar
+      CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
+      CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
+      CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
+
+
+  # Confluent ksql server
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:7.6.1
+    container_name: ksqldb-server
+    hostname: ksqldb-server
+    depends_on:
+      - broker
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_CONFIG_DIR: "/etc/ksql"
+      KSQL_BOOTSTRAP_SERVERS: "broker:29092"
+      KSQL_HOST_NAME: ksqldb-server
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:9081"
+      KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
+      KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
+      KSQL_KSQL_CONNECT_URL: "http://connect:8083"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_REPLICATION_FACTOR: 1
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: 'true'
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: 'true'
+
+  ksqldb-cli:
+    image: confluentinc/cp-ksqldb-cli:7.6.1
+    container_name: ksqldb-cli
+    hostname: ksqldb-cli
+    depends_on:
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+
+  kcat:
+    image: confluentinc/cp-kcat:7.6.1
+    container_name: kcat
+    hostname: kcat
+    depends_on:
+      - broker
+    entrypoint: /bin/bash -i
+    tty: true
+    profiles:
+      - donotstart
+
+  # Apache Flink bits    
+  flink-jobmanager:
+    image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-d
+    container_name: flink-jobmanager
+    hostname: flink-jobmanager
+    depends_on:
+      - hive-metastore
+    ports:
+      - 8081:8081     # -> Web UI console
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        rest.bind-port: 8081
+    configs:
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
+
+  flink-taskmanager:
+    image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-d
+    hostname: flink-taskmanager
+    depends_on:
+      - flink-jobmanager
+    command: taskmanager
+    deploy:
+      replicas: 2
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 10
+    configs:
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
+
+  flink-sql-client:
+    image: ${REPO_NAME}/apacheflink_sqlpod:1.18.1-scala_2.12-java11-d
+    container_name: flink-sql-client
+    hostname: flink-sql-client
+    depends_on:
+      - flink-jobmanager
+      - flink-taskmanager
+    environment:
+      FLINK_JOBMANAGER_HOST: flink-jobmanager
+    configs:
+      - source: creCat
+        target: /sql/creCat.sql
+        mode: 444
+      - source: creCdCFlink
+        target: /sql/creCdc.sql
+        mode: 444
+      - source: creFlink
+        target: /sql/creFlink.sql
+        mode: 444    
+      - source: hive-site
+        target: /opt/sql-client/conf/hive-site.xml
+        mode: 444  
+      - source: flink-conf
+        target: /opt/flink/conf/flink-conf.yaml
+        mode: 444  
+
+
+  # The below Iceberg bits come from Robbin Moffats Kafka to Iceberg blog
+  # https://www.decodable.co/blog/kafka-to-iceberg-with-flink
+  #
+  # S3-Amazon Compatible store, as storage for Iceberg
+  # http://localhost:9001/browser
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    hostname: minio
+    environment:
+      - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
+    ports:
+      - 9001:9001  # Web UI console
+      - 9000:9000  # api address
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - ./data/minio:/data
+    # profiles:
+    #   - donotstart
+
+
+  # https://hub.docker.com/r/minio/mc
+  # Minio Client
+  mc:
+    image: minio/mc:latest
+    container_name: mc
+    hostname: mc
+    depends_on:
+      - minio
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add minio ${S3_ENDPOINT_URL} admin password) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc rm -r --force minio/${S3_BUCKET};
+      /usr/bin/mc mb minio/${S3_BUCKET};
+      tail -f /dev/null
+      " 
+    # profiles:
+    #   - donotstart
+
+
+  # Datastore for Hive Metastore - Standalone 
+  postgres:
+    image: ${REPO_NAME}/postgres-12.0:1.0.0
+    container_name: postgres
+    hostname: postgres
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_DB}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    configs:
+      - source: postgres_conf
+        target: /etc/postgresql/postgresql.conf
+        mode: 444
+      - source: postgres_hba
+        target: /etc/postgresql/pg_hba.conf
+        mode: 444      
+    ports:
+      - ${DATABASE_PORT}:5432
+    command: -c config_file=/etc/postgresql/postgresql.conf
+
+
+  # Catalog for Flink
+  # https://hub.docker.com/r/naushadh/hive-metastore
+  # https://github.com/naushadh/hive-metastore/tree/main
+  # https://github.com/naushadh/hive-metastore/blob/main/Dockerfile
+  #
+  # Hive Metastore 3.0.0
+  # HADOOP_VERSION=3.3.0
+  # POSTGRES_CONNECTOR_VERSION=42.2.18
+  hive-metastore:
+    image: naushadh/hive-metastore:latest
+    container_name: hms
+    hostname: hms
+    depends_on:
+      - postgres
+      - mc
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_DB=${DATABASE_DB}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_PREFIX=${S3_PREFIX}
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    ports:
+      - 9083:9083
+
+
+  # Iceberg Python Client
+  pyiceberg:
+    image: python:3.12-bookworm
+    container_name: pyiceberg
+    hostname: pyiceberg
+    depends_on:
+      hive-metastore:
+        condition: service_healthy
+    environment:
+      PYICEBERG_CATALOG__DEFAULT__URI: thrift://hms:9083
+      PYICEBERG_CATALOG__DEFAULT__S3__ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      PYICEBERG_CATALOG__DEFAULT__S3__SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      PYICEBERG_CATALOG__DEFAULT__S3__PATH_STYLE_ACCESS: true
+      PYICEBERG_CATALOG__DEFAULT__S3__ENDPOINT: ${S3_ENDPOINT_URL}
+    entrypoint: >
+      /bin/sh -c "
+      pip install pyiceberg["s3fs,hive,pyarrow"];
+      sleep infinity
+      "
+#    profiles:
+#      - manual_start  # This service will not start automatically
+
+
+  # Iceberg/S3 -> Parquet interface via Paradedb
+  paradedb:
+    image: paradedb/paradedb:latest
+    container_name: paradedb
+    hostname: paradedb
+    environment:
+      - POSTGRES_USER=${PDBDATABASE_USER}
+      - POSTGRES_PASSWORD=${PDBDATABASE_PASSWORD}
+      - POSTGRES_DB=${PDBDATABASE_DB}
+    healthcheck:
+      test: ["CMD", "psql", "-U", "${PDBDATABASE_USER}", "${PDBDATABASE_DB}"]
+    volumes:
+      - ./data/paradedb:/var/lib/postgresql/data/
+    configs:
+      - source: postgres_conf
+        target: /etc/postgresql/postgresql.conf
+        mode: 444 
+      - source: postgres_hba
+        target: /etc/postgresql/pg_hba.conf
+        mode: 444      
+    ports:
+      - ${PDBDATABASE_PORT}:5432
+    profiles:
+      - donotstart
+    command: -c config_file=/etc/postgresql/postgresql.conf
+
+
+# Used as query engine into the Minio object store.
+  duckdb:
+    image: codieplusplus/duckdb
+    container_name: duckdb
+    hostname: duckdb
+    restart: no
+    entrypoint: tail -f /dev/null
+#    profiles:
+#      - manual_start  # This service will not start automatically
+
+
+  app:
+    image: ${REPO_NAME}/goprod-avro:1.1.0
+    container_name: app
+    hostname: app
+    depends_on:
+      - broker
+      - schema-registry
+      - control-center
+      - mysqlcdc
+      - postgrescdc
+      - mongodb
+    environment:
+      SASL_USERNAME: ${SASL_USERNAME}
+      SASL_PASSWORD: ${SASL_PASSWORD}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_CDC_USER: ${POSTGRES_CDC_USER}
+      POSTGRES_CDC_PASSWORD: ${POSTGRES_CDC_PASSWORD}
+    configs:
+      - source: app_file
+        target: /app/conf/avro_app.json
+        mode: 444
+      - source: seed_file
+        target: /app/conf/sit_seed.json
+        mode: 444
+      - source: kafka_file
+        target: /app/conf/avro_kafka.json
+        mode: 444
+      - source: mongo_file
+        target: /app/conf/avro_mongo.json
+        mode: 444
+      - source: mysql_file
+        target: /app/conf/avro_mysql.json
+        mode: 444
+      - source: pgsql_file
+        target: /app/conf/avro_pgsql.json
+        mode: 444
+    profiles:
+      - donotstart
+
+  # Reconsider
+  # https://hub.docker.com/r/mysql/mysql-server
+  # image: mysql/mysql-server:8.0.32-aarch64
+  mysqlcdc:
+    image: mysql:8.0
+    hostname: mysqlcdc
+    container_name: mysqlcdc
+    volumes:
+      - ./data/mysqlcdc:/var/lib/mysql  
+      - ./sql/mysqlcdc:/docker-entrypoint-initdb.d
+    # configs:
+    #   - source: mysql_conf
+    #     target: /etc/mysql/conf.d
+    #     mode: 444   
+    ports:
+      - ${MYSQL_HOST_PORT}:3306
+    environment:
+      MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
+    # profiles:
+    #   - donotstart
+
+
+  postgrescdc:
+    image: postgres:12
+    hostname: postgrescdc
+    container_name: postgrescdc
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD", "psql", "-U", "${POSTGRES_USER}", "${POSTGRES_DB}"]
+    volumes:
+      - ./data/postgrescdc:/var/lib/postgresql/data
+      - ./sql/postgrescdc:/docker-entrypoint-initdb.d
+    configs:
+      - source: postgres_conf
+        target: /etc/postgresql/postgresql.conf
+        mode: 444    
+      - source: postgres_hba
+        target: /etc/postgresql/data/pg_hba.conf
+        mode: 444
+    command: -c config_file=/etc/postgresql/postgresql.conf
+  # profiles:
+  #   - donotstart
+
+
+  # Used to test the local Kafka Connector/sinks into MongoDB or direct insert into MongoDB Collection.
+  mongodb:
+    image: mongodb/mongodb-atlas-local:7.0.5
+    hostname: mongodb
+    container_name: mongodb
+    ports:
+      - ${MONGO_HOST_PORT}:27017
+    volumes:
+      - ./data/mongodb:/data/db
+    # profiles:
+    #   - donotstart
+
+
+# Without a network explicitly defined, you hit this Hive/Thrift error
+# java.net.URISyntaxException Illegal character in hostname
+# https://github.com/TrivadisPF/platys-modern-data-platform/issues/231
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME}

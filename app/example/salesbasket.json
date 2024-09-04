@@ -1,0 +1,56 @@
+{
+	"invoiceNumber": "1341243123341232",
+	"saleDateTime_Ltz": "2023-12-23T16:53:39.911+02:00",
+	"salesTimetamp_Epoc": "1718117619911",
+	"store" : {
+		"id": "1033",
+		"name": "Derry"
+		},
+	"clerk": {
+		"id": "231",
+		"name": "Martin",
+		"surname": "Smith"
+		},
+	"terminalPoint": "14",
+	"basketItems":[
+		{
+			"id": "234123412",
+			"name": "Minty Frsh",
+			"brand": "Colgate",
+			"category": "Healthcare",
+			"price":12412.00,
+			"quantity":3,
+			"subtotal":3724.00
+		},
+		{
+			"id": "234123421",
+			"name": "All Bran",
+			"brand": "Kellog's",
+			"category": "Cereal",
+			"price":12.00,
+			"quantity":3,
+			"subtotal":36.00
+		},
+		{
+			"id": "534123412",
+			"name": "Sugar Free",
+			"brand": "Coke",
+			"category": "Cool drinks",
+			"price":112.00,
+			"quantity":2,
+			"subtotal":224.00
+		},
+		{
+			"id": "224123412",
+			"name": "Auto Wash",
+			"brand": "OMO",
+			"category": "Cleaning",
+			"price":22.00,
+			"quantity":4,
+			"subtotal":88.00
+		}
+	],
+	"nett": 442.23,
+	"vat":10.00,
+	"total":452.23 
+}

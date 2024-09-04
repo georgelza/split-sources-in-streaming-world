@@ -1,0 +1,12 @@
+{
+    //    "Url":  "localhost:27017/?directConnection=true",         # Local
+    "Url":  "cluster0.as3ri5t.mongodb.net",                     # Atlas
+    "Port": "",   
+    "Root": "mongodb+srv",
+    "Datastore": "MongoCom0",            
+    "Basketcollection": "avro_salesbaskets",
+    "Paymentcollection": "avro_salespayments",
+    "Batch_size": 20,                                                  # Must be a factor of the test size from *_app.json,
+    "Username": "",                                                     # Leave empty, value retrieved from .env or a secret.
+    "Passworsd": ""                                                     # Leave empty, value retrieved from .env or a secret.
+}   

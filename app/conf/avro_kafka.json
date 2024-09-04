@@ -1,0 +1,17 @@
+{
+    "EchoConfig": 2,                                                        # Note EchoConfig from General setup must == 0  for this to be considered
+    "Bootstrapservers": "localhost:9092",                                   # Add hostname for broker and schema-registry to host file
+    "SchemaRegistryURL": "http://localhost:9081",                           # Default port change 8081->9081 as not to conflict with Flink/Jobmanager
+    "Security_protocol": "",
+    "Sasl_mechanisms": "",
+    "BasketTopicname": "avro_salesbaskets",
+    "PaymentTopicname": "avro_salespayments",
+    "Numpartitions": 1,
+    "Replicationfactor": 1,
+    "Retension": 3600,                                                      # hour
+    "Parseduration": "60s",    
+    "Flush_interval": 5,
+    "Sasl_password":"",                                                     # Leave empty, value retrieved from .env or a secret.
+    "Sasl_username":"",                                                     # Leave empty, value retrieved from .env or a secret.
+    "Flush_timeout": 1000                                                   # 1000 = 1 second
+}

@@ -1,0 +1,8 @@
+{
+    "Username": "root",                                     # Leave empty, value retrieved from .env or a secret.
+    "Passworsd": "dbpassword",                                # Leave empty, value retrieved from .env or a secret.
+	"Hostname": "mysqlcdc:3306",
+	"Dbname": "sales",
+    "PaymentTable": "salespayments",
+    "Batch_size": 5                                         # Must be a factor of the test size from *_app.json,
+} 

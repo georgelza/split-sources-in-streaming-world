@@ -1,0 +1,70 @@
+{
+ "invoiceNumber": "db72a290-c668-4ca5-9c19-aa0260ce9709",
+ "payDateTime": "2024-06-19T08:24:56.111+02:00",
+ "payTimestamp": "1718778296111",
+ "paid": 854.32,
+ "finTransactionId": "d0afef10-56f3-4de9-8e10-40cec7a57b56"
+},
+{
+ "invoiceNumber": "f219990c-878f-4f10-8d24-1020f314326b",
+ "payDateTime": "2024-06-19T08:28:05.133+02:00",
+ "payTimestamp": "1718778485133",
+ "paid": 107.14,
+ "finTransactionId": "e9689d47-1b1f-4213-b8eb-1c314cc86763"
+},
+{
+ "invoiceNumber": "1ce5ccfe-7f00-44e1-97b6-cd86c73d4e90",
+ "payDateTime": "2024-06-19T08:26:30.134+02:00",
+ "payTimestamp": "1718778390134",
+ "paid": 1596.88,
+ "finTransactionId": "77cff4f6-b8bf-478f-a1f5-2eceae3739af"
+},
+{
+ "invoiceNumber": "4236ff9a-2109-4cc6-93ba-143cfd16c4e5",
+ "payDateTime": "2024-06-19T08:29:21.134+02:00",
+ "payTimestamp": "1718778561134",
+ "paid": 1631.01,
+ "finTransactionId": "816569f2-037a-4719-a3c9-ed610d96477b"
+},
+{
+ "invoiceNumber": "3ee5df5a-9584-44bd-98b8-7a52093e1464",
+ "payDateTime": "2024-06-19T08:29:40.135+02:00",
+ "payTimestamp": "1718778580135",
+ "paid": 1089.81,
+ "finTransactionId": "69c7be39-6cd2-4740-9838-6679a9c2ba76"
+},
+{
+ "invoiceNumber": "a73c1019-9bcf-4206-96f9-ff559abf9546",
+ "payDateTime": "2024-06-19T08:28:35.135+02:00",
+ "payTimestamp": "1718778515135",
+ "paid": 267.8,
+ "finTransactionId": "165d66fc-9cef-45a3-8298-16a55c4fd537"
+},
+{
+ "invoiceNumber": "5960546b-639e-4372-9a28-35ae1b54947c",
+ "payDateTime": "2024-06-19T08:26:39.135+02:00",
+ "payTimestamp": "1718778399135",
+ "paid": 1919.97,
+ "finTransactionId": "476165b0-3057-4feb-842a-372ad36cf06f"
+},
+{
+ "invoiceNumber": "2e57e1bf-62c0-44dd-b13b-011e906beb55",
+ "payDateTime": "2024-06-19T08:25:52.136+02:00",
+ "payTimestamp": "1718778352136",
+ "paid": 1985.62,
+ "finTransactionId": "9d38987e-9bca-49c6-9b51-b2a88e77b5d6"
+},
+{
+ "invoiceNumber": "613c7641-f2a6-4b84-b94d-dbc1c3500664",
+ "payDateTime": "2024-06-19T08:26:16.136+02:00",
+ "payTimestamp": "1718778376136",
+ "paid": 882.27,
+ "finTransactionId": "b15482a7-6b6a-4d5d-b551-bb77bbe00901"
+},
+{
+ "invoiceNumber": "d1d16a2c-944d-48e1-a2d9-8b62be4c6854",
+ "payDateTime": "2024-06-19T08:26:34.136+02:00",
+ "payTimestamp": "1718778394136",
+ "paid": 694.67,
+ "finTransactionId": "259c4e32-4673-438a-bf54-3a0a7f47df48"
+},

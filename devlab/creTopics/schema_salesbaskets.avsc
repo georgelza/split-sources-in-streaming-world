@@ -1,0 +1,56 @@
+{
+  "type": "record",
+  "name": "SalesBasket",
+  "namespace": "Sales",
+  "fields": [
+    {"name": "invoiceNumber","type": "string"},
+    {"name": "saleDateTime_Ltz","type": "string"},
+    {"name": "saleTimestamp_Epoc","type": "string"},
+    {"name": "terminalPoint","type": "string"},
+    {"name": "total","type": "double"},
+    {"name": "vat","type": "double"},
+    {"name": "nett","type": "double"},
+    {
+      "name": "clerk",
+      "type": {
+          "type": "record",
+          "name": "clerk",
+          "fields": [
+            {"name": "id","type": "string"},
+            {"name": "name","type": "string"},
+            {"name": "surname","type": "string"}
+          ]
+        }
+    },
+    {
+      "name": "store",  
+      "type": {
+          "type": "record",
+          "name": "store",
+          "fields": [
+            {"name": "id","type": "string"},
+            {"name": "name","type": "string"}
+          ]
+        }
+    },
+    {
+      "name": "basketItems",
+      "type": {
+          "type": "array",
+          "items": {
+              "type": "record",
+              "name": "basketItems",
+              "fields": [
+                {"name": "brand","type": "string"},
+                {"name": "category","type": "string"},
+                {"name": "id","type": "string"},
+                {"name": "name","type": "string"},
+                {"name": "price","type": "double"},
+                {"name": "quantity","type": "int"},
+                {"name": "subtotal","type": "double"}
+              ]
+            }
+        }
+    }
+  ]
+}

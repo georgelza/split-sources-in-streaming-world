@@ -1,0 +1,10 @@
+{
+	"invoiceNumber": "1341243123341232",
+	"saleDateTime_Ltz": "2023-12-23T16:53:39.911+02:00",
+	"saleTimestamp_Epoc": "1718117619911",
+	"storeid" : "1033",
+	"product":"Minty Frsh",
+	"brand": "Colgate",
+	"subtotal":12412.00,
+	"category": "Healthcare"
+}

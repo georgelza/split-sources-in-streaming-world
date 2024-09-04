@@ -1,0 +1,10 @@
+{
+    "Username": "dbadmin",                                  # Leave empty, value retrieved from .env or a secret.
+    "Passworsd": "dbpassword",                              # Leave empty, value retrieved from .env or a secret.
+    "Hostname": "postgresqlcdc",
+    "Port": 25432,
+	"Dbname": "sales",
+    "Schema": "public",
+    "PaymentTable": "salespayments",
+    "Batch_size": 1                                         # Must be a factor of the test size from *_app.json,
+} 

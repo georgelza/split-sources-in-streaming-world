@@ -1,0 +1,7 @@
+{
+ 	"invoiceNumber": "1341243123341232",
+	"payDateTime_Ltz": "2023-12-23-T16:55:39.000+02:00",
+	"payTimestamp_Epoc": "1718117619911",
+	"paid": 452.23,
+	"finTransactionId": "42dfgt245wsdg34231rfwfg234234"
+}

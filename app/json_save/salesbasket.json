@@ -1,0 +1,582 @@
+{
+ "invoiceNumber": "db72a290-c668-4ca5-9c19-aa0260ce9709",
+ "saleDateTime": "2024-06-19T08:23:58.111+02:00",
+ "saleTimestamp": "1718778238111",
+ "store": {
+  "id": "224213412",
+  "name": "Durbanville"
+ },
+ "clerk": {
+  "id": "10018",
+  "name": "Max"
+ },
+ "terminalPoint": "2",
+ "basketItems": [
+  {
+   "id": "000000040",
+   "name": "Tastic Rice 2kg",
+   "brand": "Tastic",
+   "category": "Food Cupboard",
+   "price": 41.99,
+   "quantity": 4
+  },
+  {
+   "id": "000000018",
+   "name": "McD Big Mac",
+   "brand": "McD",
+   "category": "Food Cupboard",
+   "price": 5.49,
+   "quantity": 3
+  },
+  {
+   "id": "000000046",
+   "name": "HTH Granular Mineral Soft 8kg",
+   "brand": "HTH",
+   "category": "Pool Care",
+   "price": 439.99,
+   "quantity": 1
+  },
+  {
+   "id": "000000028",
+   "name": "PnP Sunflower Oil 2L",
+   "brand": "PnP",
+   "category": "Food Cupboard",
+   "price": 79.99,
+   "quantity": 1
+  },
+  {
+   "id": "000000023",
+   "name": "Brookes Oros 2L",
+   "brand": "Brooks",
+   "category": "Beverage",
+   "price": 44.99,
+   "quantity": 1
+  }
+ ],
+ "nett": 749.4,
+ "vat": 104.92,
+ "total": 854.32
+},
+{
+ "invoiceNumber": "f219990c-878f-4f10-8d24-1020f314326b",
+ "saleDateTime": "2024-06-19T08:23:58.133+02:00",
+ "saleTimestamp": "1718778238133",
+ "store": {
+  "id": "324213410",
+  "name": "Randburg"
+ },
+ "clerk": {
+  "id": "10003",
+  "name": "Susan"
+ },
+ "terminalPoint": "18",
+ "basketItems": [
+  {
+   "id": "000000021",
+   "name": "Stork Country 40% Fat Spread 1kg",
+   "brand": "Stork",
+   "category": "Food Cupboard",
+   "price": 46.99,
+   "quantity": 2
+  }
+ ],
+ "nett": 93.98,
+ "vat": 13.16,
+ "total": 107.14
+},
+{
+ "invoiceNumber": "1ce5ccfe-7f00-44e1-97b6-cd86c73d4e90",
+ "saleDateTime": "2024-06-19T08:23:58.134+02:00",
+ "saleTimestamp": "1718778238134",
+ "store": {
+  "id": "324213416",
+  "name": "Warmer"
+ },
+ "clerk": {
+  "id": "10001",
+  "name": "Martin"
+ },
+ "terminalPoint": "19",
+ "basketItems": [
+  {
+   "id": "000000036",
+   "name": "Rama 70% Fat Spread Original 500g",
+   "brand": "Rama",
+   "category": "Food Cupboard",
+   "price": 43.99,
+   "quantity": 4
+  },
+  {
+   "id": "000000027",
+   "name": "Knorr Spaghetti Bolognaise Dry Cook In Sauce 48g",
+   "brand": "Knorr",
+   "category": "Food Cupboard",
+   "price": 19.99,
+   "quantity": 3
+  },
+  {
+   "id": "000000050",
+   "name": "Clover Vanilla Custard 1l",
+   "brand": "Clover",
+   "category": "Beverage",
+   "price": 27.99,
+   "quantity": 4
+  },
+  {
+   "id": "000000022",
+   "name": "Simba Potato Chips Mrs Balls Chutney 120g",
+   "brand": "Simba",
+   "category": "Food Cupboard",
+   "price": 19.99,
+   "quantity": 2
+  },
+  {
+   "id": "000000029",
+   "name": "Colgate Maximum Cavity Protection Regular Toothpaste 100ml",
+   "brand": "Colgate",
+   "category": "Personal Health Care",
+   "price": 28.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000006",
+   "name": "Jacobs Kronung Decaf Instant 100g",
+   "brand": "Jabobs",
+   "category": "Food Cupboard",
+   "price": 124,
+   "quantity": 2
+  },
+  {
+   "id": "000000009",
+   "name": "Nescafe Salted Caramel 180g 10 Sachets",
+   "brand": "Nescafe",
+   "category": "Food Cupboard",
+   "price": 74,
+   "quantity": 5
+  },
+  {
+   "id": "000000043",
+   "name": "Hulett Sunsweet Brown Sugar 2kg",
+   "brand": "Hulett",
+   "category": "Food Cupboard",
+   "price": 49.99,
+   "quantity": 5
+  }
+ ],
+ "nett": 1400.77,
+ "vat": 196.11,
+ "total": 1596.88
+},
+{
+ "invoiceNumber": "4236ff9a-2109-4cc6-93ba-143cfd16c4e5",
+ "saleDateTime": "2024-06-19T08:23:58.134+02:00",
+ "saleTimestamp": "1718778238134",
+ "store": {
+  "id": "324213411",
+  "name": "Wavecrest"
+ },
+ "clerk": {
+  "id": "10013",
+  "name": "Mohammed"
+ },
+ "terminalPoint": "19",
+ "basketItems": [
+  {
+   "id": "000000023",
+   "name": "Brookes Oros 2L",
+   "brand": "Brooks",
+   "category": "Beverage",
+   "price": 44.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000035",
+   "name": "Nestle KitKat 4 Finger Milk Chocolate Bar 41.5g",
+   "brand": "Nestle",
+   "category": "Food Cupboard",
+   "price": 13.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000044",
+   "name": "Dettol Soap Active 175g",
+   "brand": "Dettol",
+   "category": "Personal Health Care",
+   "price": 17.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000001",
+   "name": "Dove Soap Gentle 90g",
+   "brand": "Dove",
+   "category": "Personal Health Care",
+   "price": 24.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000048",
+   "name": "Liqui-Fruit Cranberry Cooler Juice 1L",
+   "brand": "Liqui-Fruit",
+   "category": "Beverage",
+   "price": 134.99,
+   "quantity": 2
+  },
+  {
+   "id": "000000003",
+   "name": "Dove Cotton whool Rounds 80 Pack",
+   "brand": "Dove",
+   "category": "Personal Health Care",
+   "price": 36.99,
+   "quantity": 3
+  },
+  {
+   "id": "000000048",
+   "name": "Liqui-Fruit Cranberry Cooler Juice 1L",
+   "brand": "Liqui-Fruit",
+   "category": "Beverage",
+   "price": 134.99,
+   "quantity": 4
+  }
+ ],
+ "nett": 1430.71,
+ "vat": 200.3,
+ "total": 1631.01
+},
+{
+ "invoiceNumber": "3ee5df5a-9584-44bd-98b8-7a52093e1464",
+ "saleDateTime": "2024-06-19T08:23:58.135+02:00",
+ "saleTimestamp": "1718778238135",
+ "store": {
+  "id": "324213410",
+  "name": "Milnerton"
+ },
+ "clerk": {
+  "id": "10004",
+  "name": "Thabo"
+ },
+ "terminalPoint": "9",
+ "basketItems": [
+  {
+   "id": "000000007",
+   "name": "Nescafe Classic Gold 200g",
+   "brand": "Nescafe",
+   "category": "Food Cupboard",
+   "price": 104,
+   "quantity": 4
+  },
+  {
+   "id": "000000045",
+   "name": "HTH Floater + 1.6kg",
+   "brand": "HTH",
+   "category": "Pool Care",
+   "price": 179.99,
+   "quantity": 3
+  }
+ ],
+ "nett": 955.97,
+ "vat": 133.84,
+ "total": 1089.81
+},
+{
+ "invoiceNumber": "a73c1019-9bcf-4206-96f9-ff559abf9546",
+ "saleDateTime": "2024-06-19T08:23:58.135+02:00",
+ "saleTimestamp": "1718778238135",
+ "store": {
+  "id": "324213411",
+  "name": "Wavecrest"
+ },
+ "clerk": {
+  "id": "10016",
+  "name": "Wayne"
+ },
+ "terminalPoint": "3",
+ "basketItems": [
+  {
+   "id": "000000052",
+   "name": "Simba Potato Chips Creamy Cheddar 120g",
+   "brand": "Simba",
+   "category": "Food Cupboard",
+   "price": 19.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000052",
+   "name": "Simba Nik Naks Cheese Flavour 135g",
+   "brand": "Simba",
+   "category": "Food Cupboard",
+   "price": 14.99,
+   "quantity": 1
+  },
+  {
+   "id": "000000042",
+   "name": "Nola Tangy Mayonnaise 750g",
+   "brand": "Nola",
+   "category": "Food Cupboard",
+   "price": 39.99,
+   "quantity": 3
+  }
+ ],
+ "nett": 234.91,
+ "vat": 32.89,
+ "total": 267.8
+},
+{
+ "invoiceNumber": "5960546b-639e-4372-9a28-35ae1b54947c",
+ "saleDateTime": "2024-06-19T08:23:58.135+02:00",
+ "saleTimestamp": "1718778238135",
+ "store": {
+  "id": "324213411",
+  "name": "Wavecrest"
+ },
+ "clerk": {
+  "id": "10013",
+  "name": "Mohammed"
+ },
+ "terminalPoint": "5",
+ "basketItems": [
+  {
+   "id": "000000025",
+   "name": "Fatti's \u0026 Moni's Spaghetti 500g",
+   "brand": "Fatti's \u0026 Moni's",
+   "category": "Food Cupboard",
+   "price": 19.99,
+   "quantity": 4
+  },
+  {
+   "id": "000000007",
+   "name": "Nescafe Classic Gold 200g",
+   "brand": "Nescafe",
+   "category": "Food Cupboard",
+   "price": 104,
+   "quantity": 4
+  },
+  {
+   "id": "000000034",
+   "name": "Kellogg's Coco Pops Original 350g",
+   "brand": "Kellogg's",
+   "category": "Food Cupboard",
+   "price": 55.99,
+   "quantity": 2
+  },
+  {
+   "id": "000000006",
+   "name": "Jacobs Kronung Decaf Instant 100g",
+   "brand": "Jabobs",
+   "category": "Food Cupboard",
+   "price": 124,
+   "quantity": 3
+  },
+  {
+   "id": "000000013",
+   "name": "Sunlight Dishwashing Liquid",
+   "brand": "Sunlight",
+   "category": "Cleaning",
+   "price": 2.2,
+   "quantity": 2
+  },
+  {
+   "id": "000000035",
+   "name": "Nestle KitKat 4 Finger Milk Chocolate Bar 41.5g",
+   "brand": "Nestle",
+   "category": "Food Cupboard",
+   "price": 13.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000039",
+   "name": "Robertsons Chicken Spice Refill 84g",
+   "brand": "Robertsons",
+   "category": "Food Cupboard",
+   "price": 19.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000046",
+   "name": "HTH Granular Mineral Soft 8kg",
+   "brand": "HTH",
+   "category": "Pool Care",
+   "price": 439.99,
+   "quantity": 1
+  },
+  {
+   "id": "000000044",
+   "name": "Dettol Soap Active 175g",
+   "brand": "Dettol",
+   "category": "Personal Health Care",
+   "price": 17.99,
+   "quantity": 5
+  }
+ ],
+ "nett": 1684.18,
+ "vat": 235.79,
+ "total": 1919.97
+},
+{
+ "invoiceNumber": "2e57e1bf-62c0-44dd-b13b-011e906beb55",
+ "saleDateTime": "2024-06-19T08:23:58.136+02:00",
+ "saleTimestamp": "1718778238136",
+ "store": {
+  "id": "324213442",
+  "name": "Rondebosch"
+ },
+ "clerk": {
+  "id": "10005",
+  "name": "Tshepo"
+ },
+ "terminalPoint": "20",
+ "basketItems": [
+  {
+   "id": "000000017",
+   "name": "KFC Street Wise 5",
+   "brand": "KFC",
+   "category": "Food Cupboard",
+   "price": 40.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000003",
+   "name": "Dove Cotton whool Rounds 80 Pack",
+   "brand": "Dove",
+   "category": "Personal Health Care",
+   "price": 36.99,
+   "quantity": 3
+  },
+  {
+   "id": "000000043",
+   "name": "Hulett Sunsweet Brown Sugar 2kg",
+   "brand": "Hulett",
+   "category": "Food Cupboard",
+   "price": 49.99,
+   "quantity": 4
+  },
+  {
+   "id": "000000006",
+   "name": "Jacobs Kronung Decaf Instant 100g",
+   "brand": "Jabobs",
+   "category": "Food Cupboard",
+   "price": 124,
+   "quantity": 3
+  },
+  {
+   "id": "000000053",
+   "name": "Mooi River Salted Butter 500g",
+   "brand": "MooiRiver",
+   "category": "Food Cupboard",
+   "price": 84.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000053",
+   "name": "Mooi River Salted Butter 500g",
+   "brand": "MooiRiver",
+   "category": "Food Cupboard",
+   "price": 84.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000010",
+   "name": "Nespresso Black",
+   "brand": "Nesspresso",
+   "category": "Coffee",
+   "price": 1.33,
+   "quantity": 3
+  }
+ ],
+ "nett": 1741.77,
+ "vat": 243.85,
+ "total": 1985.62
+},
+{
+ "invoiceNumber": "613c7641-f2a6-4b84-b94d-dbc1c3500664",
+ "saleDateTime": "2024-06-19T08:23:58.136+02:00",
+ "saleTimestamp": "1718778238136",
+ "store": {
+  "id": "224213412",
+  "name": "Durbanville"
+ },
+ "clerk": {
+  "id": "10012",
+  "name": "Michael"
+ },
+ "terminalPoint": "18",
+ "basketItems": [
+  {
+   "id": "000000045",
+   "name": "HTH Floater + 1.6kg",
+   "brand": "HTH",
+   "category": "Pool Care",
+   "price": 179.99,
+   "quantity": 1
+  },
+  {
+   "id": "000000033",
+   "name": "PnP 2 Ply White Toilet Paper 18 Pack",
+   "brand": "PnP",
+   "category": "Cleaning",
+   "price": 134.99,
+   "quantity": 4
+  },
+  {
+   "id": "000000044",
+   "name": "Dettol Soap Active 175g",
+   "brand": "Dettol",
+   "category": "Personal Health Care",
+   "price": 17.99,
+   "quantity": 3
+  }
+ ],
+ "nett": 773.92,
+ "vat": 108.35,
+ "total": 882.27
+},
+{
+ "invoiceNumber": "d1d16a2c-944d-48e1-a2d9-8b62be4c6854",
+ "saleDateTime": "2024-06-19T08:23:58.136+02:00",
+ "saleTimestamp": "1718778238136",
+ "store": {
+  "id": "354213412",
+  "name": "C-Place"
+ },
+ "clerk": {
+  "id": "10013",
+  "name": "Mohammed"
+ },
+ "terminalPoint": "12",
+ "basketItems": [
+  {
+   "id": "000000040",
+   "name": "Tastic Rice 2kg",
+   "brand": "Tastic",
+   "category": "Food Cupboard",
+   "price": 41.99,
+   "quantity": 3
+  },
+  {
+   "id": "000000014",
+   "name": "Coca-Cola Soft Drink 1.5L",
+   "brand": "Coka Coke",
+   "category": "Beverage",
+   "price": 18.49,
+   "quantity": 1
+  },
+  {
+   "id": "000000003",
+   "name": "Dove Cotton whool Rounds 80 Pack",
+   "brand": "Dove",
+   "category": "Personal Health Care",
+   "price": 36.99,
+   "quantity": 5
+  },
+  {
+   "id": "000000034",
+   "name": "Kellogg's Coco Pops Original 350g",
+   "brand": "Kellogg's",
+   "category": "Food Cupboard",
+   "price": 55.99,
+   "quantity": 5
+  }
+ ],
+ "nett": 609.36,
+ "vat": 85.31,
+ "total": 694.67
+},
