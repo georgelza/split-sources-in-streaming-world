@@ -36,10 +36,10 @@ creConnect/.pwdmongoatlas
 app/data/*
 app/example/*.parquet
 
-devlab-hms-postgres/data/*
+devlab/data/*
 
-devlab-hms-postgres/flink/stage/*
-devlab-hms-postgres/sql-client/stage/*
+devlab/flink/stage/*
+devlab/sql-client/stage/*
 
 infrastructure/build-hive-openjdk8/basehadoop/stage/*
 infrastructure/build-hive-openjdk8/basehive/stage/*
