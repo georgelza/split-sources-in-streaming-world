@@ -3,7 +3,7 @@
     "debuglevel": 2,                                # 0=no logging, up to 4 ull logging enabled
     "testsize": 40000,                              # if 0 then we set it to very large value (10000000000000) to simply continue running,
                                                     # Make the Batch_size size a factor of the testsize when Mongo inserts are enabled
-    "sleep": 150,                                   # Milliseconds, aka 5000 => 5 seconds. this mean we will sleep between 0 and 5000 between payload creates.
+    "sleep": 500,                                   # Milliseconds, aka 5000 => 5 seconds. this mean we will sleep between 0 and 5000 between payload creates.
                                                     # setting it to 0 disables is.
     "vatrate": 0.14,                                # Sales tax
     "SeedFile": "sit_seed.json",                    # File containing seed data.

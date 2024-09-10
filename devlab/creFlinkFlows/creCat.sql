@@ -1,41 +1,54 @@
 
--- https://www.decodable.co/blog/catalogs-in-flink-sql-hands-on
--- https://github.com/decodableco/examples/tree/main/catalogs/flink-iceberg-jdbc
+-- https://paimon.apache.org/docs/0.7/how-to/creating-catalogs/#creating-a-catalog-with-filesystem-metastore
 
 
--- This willbe the commands used to create the catalog sitting behind flink
---
-
--- INTERESTING, things written to the c_hive catalog is only recorded as existing in the hive catalog, but not persisted to Minio/S3... The persistence in this case
--- comes from salescompleted writing out to Kafka. 
+USE CATALOG default_catalog;
 
 CREATE CATALOG c_hive WITH (
-        'type'          = 'hive',
-        'hive-conf-dir' = './conf'
+  'type'          = 'hive',
+  'hive-conf-dir' = './conf/'
 );
 
 USE CATALOG c_hive;
 
-CREATE DATABASE c_hive.db01;
+CREATE DATABASE db01;
 
-USE c_hive.db01;
-SHOW TABLES;
+-- SHOW DATABASES;
+-- USE c_hive.db01;
+-- SHOW TABLES;
 
+-- Paimon on S3
 USE CATALOG default_catalog;
 
--- => http://minio:9000/warehouse/dev/db/*
-CREATE CATALOG c_iceberg WITH (
-       'type'           = 'iceberg',
-       'catalog-type'   = 'hive',
-       'warehouse'      = 's3a://iceberg',
-       'hive-conf-dir'  = './conf'
+CREATE CATALOG c_paimon WITH (
+     'type'                      = 'paimon'
+    ,'catalog-type'              = 'hive'
+    ,'hive-conf-dir'             = './conf/'
+    ,'warehouse'                 = 's3://paimon/'
+    ,'table-default.file.format' = 'parquet'
 );
 
-USE CATALOG c_iceberg;
+-- -- With above we just create table on storage, table inherites type from catalog definition
 
-CREATE DATABASE c_iceberg.dev;
+USE CATALOG c_paimon;
 
-USE c_iceberg.dev;
-SHOW TABLES;
+CREATE DATABASE IF NOT EXISTS dev;
+-- => dev.db
+
+-- SHOW DATABASES;
+-- USE c_paimon.dev;
+-- SHOW TABLES;
 
 
+
+-- For now I'm specifying the AWS user and password using 
+-- CREATE CATALOG c_paimon WITH (
+--      'type'                      = 'paimon'
+--     ,'warehouse'                 = 's3://paimon/'
+--     ,'catalog-type'              = 'hive'
+--     ,'hive-conf-dir'             = './conf'
+--     ,'table-default.file.format' = 'parquet'
+--     ,'fs.s3a.endpoint'           = 'http://minio:9000'
+--     ,'fs.s3a.access-key'         = 'admin'
+--     ,'fs.s3a.secret-key'         = 'password'
+-- );

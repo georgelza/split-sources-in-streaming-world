@@ -24,8 +24,6 @@ configs:
     file: conf/postgresql.conf
   postgres_hba:
     file: conf/pg_hba.conf
-  mysql_conf:
-    file: conf/mysql.cnf
 
   creCat:
     file: creFlinkFlows/creCat.sql
@@ -36,8 +34,12 @@ configs:
 
   hive-site:
     file: conf/hive-site.xml
-  flink-conf:
-    file: conf/flink-conf.yaml
+  flink-conf-jm:
+    file: conf/flink-conf-jm.yaml
+  flink-conf-tm:
+    file: conf/flink-conf-tm.yaml
+  flink-conf-sc:
+    file: conf/flink-conf-sc.yaml
 
 services:
   # Core Confluent Kafka bits
@@ -175,8 +177,8 @@ services:
       - broker
     entrypoint: /bin/bash -i
     tty: true
-    profiles:
-      - donotstart
+    # profiles:
+    #   - donotstart
 
   # Apache Flink bits    
   flink-jobmanager:
@@ -187,34 +189,46 @@ services:
       - hive-metastore
     ports:
       - 8081:8081     # -> Web UI console
-    command: jobmanager
     environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         rest.bind-port: 8081
+    volumes:
+      - ./data/flink/job/artifacts:/opt/flink/usrlib
     configs:
       - source: hive-site
         target: /opt/flink/conf/hive-site.xml
-        mode: 444  
+        mode: 0644  
+        uid: "9999"
+        gid: "9999"
+    command: jobmanager
 
   flink-taskmanager:
     image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-d
     hostname: flink-taskmanager
     depends_on:
       - flink-jobmanager
-    command: taskmanager
     deploy:
       replicas: 2
     environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 10
+    volumes:
+      - ./data/flink/job/artifacts:/opt/flink/usrlib
     configs:
       - source: hive-site
         target: /opt/flink/conf/hive-site.xml
-        mode: 444  
+        mode: 0644
+        uid: "9999"
+        gid: "9999"
+    command: taskmanager
 
   flink-sql-client:
     image: ${REPO_NAME}/apacheflink_sqlpod:1.18.1-scala_2.12-java11-d
@@ -222,13 +236,14 @@ services:
     hostname: flink-sql-client
     depends_on:
       - flink-jobmanager
-      - flink-taskmanager
     environment:
-      FLINK_JOBMANAGER_HOST: flink-jobmanager
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - FLINK_JOBMANAGER_HOST=flink-jobmanager
     configs:
       - source: creCat
         target: /sql/creCat.sql
-        mode: 444
+        mode: 4644
       - source: creCdCFlink
         target: /sql/creCdc.sql
         mode: 444
@@ -237,10 +252,14 @@ services:
         mode: 444    
       - source: hive-site
         target: /opt/sql-client/conf/hive-site.xml
-        mode: 444  
-      - source: flink-conf
+        mode: 644  
+        uid: "9999"
+        gid: "9999"
+      - source: flink-conf-sc
         target: /opt/flink/conf/flink-conf.yaml
-        mode: 444  
+        mode: 644  
+        uid: "9999"
+        gid: "9999"
 
 
   # The below Iceberg bits come from Robbin Moffats Kafka to Iceberg blog
@@ -294,21 +313,23 @@ services:
     image: ${REPO_NAME}/postgres-12.0:1.0.0
     container_name: postgres
     hostname: postgres
+    ports:
+      - ${DATABASE_PORT}:5432
     environment:
       - POSTGRES_USER=${DATABASE_USER}
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_DB=${DATABASE_DB}
+    healthcheck:
+      test: ["CMD", "psql", "-U", "${DATABASE_USER}", "${DATABASE_DB}"]
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     configs:
       - source: postgres_conf
         target: /etc/postgresql/postgresql.conf
-        mode: 444
+        mode: 444    
       - source: postgres_hba
-        target: /etc/postgresql/pg_hba.conf
-        mode: 444      
-    ports:
-      - ${DATABASE_PORT}:5432
+        target: /etc/postgresql/data/pg_hba.conf
+        mode: 444
     command: -c config_file=/etc/postgresql/postgresql.conf
 
 
@@ -365,33 +386,6 @@ services:
 #      - manual_start  # This service will not start automatically
 
 
-  # Iceberg/S3 -> Parquet interface via Paradedb
-  paradedb:
-    image: paradedb/paradedb:latest
-    container_name: paradedb
-    hostname: paradedb
-    environment:
-      - POSTGRES_USER=${PDBDATABASE_USER}
-      - POSTGRES_PASSWORD=${PDBDATABASE_PASSWORD}
-      - POSTGRES_DB=${PDBDATABASE_DB}
-    healthcheck:
-      test: ["CMD", "psql", "-U", "${PDBDATABASE_USER}", "${PDBDATABASE_DB}"]
-    volumes:
-      - ./data/paradedb:/var/lib/postgresql/data/
-    configs:
-      - source: postgres_conf
-        target: /etc/postgresql/postgresql.conf
-        mode: 444 
-      - source: postgres_hba
-        target: /etc/postgresql/pg_hba.conf
-        mode: 444      
-    ports:
-      - ${PDBDATABASE_PORT}:5432
-    profiles:
-      - donotstart
-    command: -c config_file=/etc/postgresql/postgresql.conf
-
-
 # Used as query engine into the Minio object store.
   duckdb:
     image: codieplusplus/duckdb
@@ -399,9 +393,6 @@ services:
     hostname: duckdb
     restart: no
     entrypoint: tail -f /dev/null
-#    profiles:
-#      - manual_start  # This service will not start automatically
-
 
   app:
     image: ${REPO_NAME}/goprod-avro:1.1.0
@@ -456,13 +447,6 @@ services:
     image: mysql:8.0
     hostname: mysqlcdc
     container_name: mysqlcdc
-    volumes:
-      - ./data/mysqlcdc:/var/lib/mysql  
-      - ./sql/mysqlcdc:/docker-entrypoint-initdb.d
-    # configs:
-    #   - source: mysql_conf
-    #     target: /etc/mysql/conf.d
-    #     mode: 444   
     ports:
       - ${MYSQL_HOST_PORT}:3306
     environment:
@@ -471,12 +455,24 @@ services:
       MYSQL_DATABASE: ${MYSQL_DB}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
+      TZ: "Africa/Pretoria"
+    healthcheck:
+      test: ["CMD", 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p$$MYSQL_ROOT_PASSWORD' ]
+      timeout: 20s
+      retries: 10
+    volumes:
+      - ./data/mysqlcdc:/var/lib/mysql  
+      - ./sql/mysqlcdc:/docker-entrypoint-initdb.d
+    # configs:
+    #   - source: mysql_conf
+    #     target: /etc/mysql/conf.d
+    #     mode: 444   
     # profiles:
     #   - donotstart
 
 
   postgrescdc:
-    image: postgres:12
+    image: ${REPO_NAME}/postgres-12.0:1.0.0
     hostname: postgrescdc
     container_name: postgrescdc
     ports:
@@ -492,14 +488,12 @@ services:
       - ./sql/postgrescdc:/docker-entrypoint-initdb.d
     configs:
       - source: postgres_conf
-        target: /etc/postgresql/postgresql.conf
         mode: 444    
       - source: postgres_hba
         target: /etc/postgresql/data/pg_hba.conf
         mode: 444
     command: -c config_file=/etc/postgresql/postgresql.conf
-  # profiles:
-  #   - donotstart
+
 
 
   # Used to test the local Kafka Connector/sinks into MongoDB or direct insert into MongoDB Collection.

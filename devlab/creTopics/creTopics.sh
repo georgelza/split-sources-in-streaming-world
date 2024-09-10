@@ -35,4 +35,4 @@ docker compose exec broker kafka-topics \
 
  ./reg_salesbaskets.sh
 
- ./reg_salespayments.sh
+# ./reg_salespayments.sh

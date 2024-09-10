@@ -9,8 +9,7 @@ define HELP
 
 Available commands:
 
-- wgethadoop: Download Apache Hadoop 3.3.8 tar.gz source files.
-- wgethive: Download Apache Hive require source files.
+- wget: Download Apache Hadoop 3.3.8 tar.gz & Apache Hive require source files.
 
 - basehadoop: Build the Apache Hadoop base image project
 - basehive: Build the Apache Hive base image project
@@ -41,24 +40,28 @@ ifdef CUSTOM_CA
 	cp -rf $(CUSTOM_CA)/* ca_certificates/ || cp -f $(CUSTOM_CA) ca_certificates/
 endif
 
-wgethadoop:
-	cd basehadoop; mkdir stage; cd  stage; wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5-aarch64.tar.gz
+wget: clean
+	cd basehadoop; mkdir -p stage
+	cd basehive; mkdir -p stage
+	cd basehadoop; cd stage; wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5-aarch64.tar.gz
+	cd basehive; cd stage; wget https://downloads.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
+	cd basehive; cd stage; wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5-aarch64.tar.gz
+	cd basehive; cd stage; wget http://www.congiu.net/hive-json-serde/1.3.8/cdh5/json-serde-1.3.8-jar-with-dependencies.jar 
+	cd basehive; cd stage; wget https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
+
+clean:
+	cd basehadoop; cd stage; rm *
+	cd basehive; cd stage; rm *
 
 basehadoop: 
-	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hadoop-base-$(HADOOP_VERSION):$(VERSION) --no-cache ./basehadoop
-
-wgethive:
-	cd basehive; mkdir stage; cd  stage; wget https://downloads.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
-	cd basehive; cd  stage; wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5-aarch64.tar.gz
-	cd basehive; cd  stage; wget http://www.congiu.net/hive-json-serde/1.3.8/cdh5/json-serde-1.3.8-jar-with-dependencies.jar 
-	cd basehive; cd  stage; wget https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
+	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hadoop-base-$(HADOOP_VERSION):$(VERSION) ./basehadoop
 
 basehive: 
-	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hive-base-$(HIVE_VERSION):$(VERSION) --no-cache ./basehive
+	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hive-base-$(HIVE_VERSION):$(VERSION) ./basehive
 
 build:  basehadoop basehive
-	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hive-metastore-$(HIVE_VERSION):$(VERSION) --no-cache ./hive-metastore 
-	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hive-hiveserver2-$(HIVE_VERSION):$(VERSION) --no-cache ./hive-hiveserver2
+	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hive-metastore-$(HIVE_VERSION):$(VERSION) ./hive-metastore 
+	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/hive-hiveserver2-$(HIVE_VERSION):$(VERSION) ./hive-hiveserver2
 
 run:
 	docker compose -p devlab up -d

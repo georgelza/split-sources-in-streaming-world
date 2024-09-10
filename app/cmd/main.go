@@ -836,7 +836,7 @@ func constructFakeBasket() (strct_Basket types.TPBasket, eventTimestamp time.Tim
 			Category: vSeed.Products[productId].Category,
 			Price:    price,
 			Quantity: quantity,
-			Subtotal: price * float64(quantity),
+			Subtotal: toFixed(price*float64(quantity), 2),
 		}
 		strct_BasketItems = append(strct_BasketItems, strct_BasketItem)
 

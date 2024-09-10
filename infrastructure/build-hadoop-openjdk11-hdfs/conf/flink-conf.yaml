@@ -1,0 +1,26 @@
+################################################################################
+# Copyright 2019 Ververica GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
+jobmanager.rpc.address: flink-jobmanager
+
+# So each time—assuming you want to access and persist metadata about the objects that you're creating—you'll need to go and CREATE CATALOG. Which gets kinda tedious. This is where a Catalog Store comes in. Whilst the catalog [metastore] holds the metadata about the objects in the catalog, a catalog store holds the metadata about the catalogs.
+# By default, Flink will use an in-memory catalog store, which sounds fancy until you realise that it isn't persisted and when you restart your SQL Client session the catalog store will be empty. The alternative (out of the box, at least) is the FileCatalogStore which writes details about your catalog(s) to disk. Note that it writes details about the catalog, and not its contents. So if you’re using the in-memory catalog, you still can’t persist table definitions across sessions. With a CatalogStore configured you’d just persist the definition of that in-memory catalog.
+# NOTE: in older versions of Flink you could store SQL Client configuration, including catalog definitions, in sql-client-defaults.yaml. This was deprecated in 1.15 as part of FLIP-163 and should not be used.
+# To use the FileCatalogStore with Flink SQL add these lines to your conf/flink-config.yaml in your Flink installation folder:
+
+# pointer to where the catalog store is defined, telling us then what catalogs are available.
+table.catalog-store.kind: file
+table.catalog-store.file.path: /opt/flink/conf/catalogs

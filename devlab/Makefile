@@ -8,7 +8,7 @@ Available commands:
 
 - build: Build all the images from the downloaded infrastructure components. After this execute "make run", followed by "make deploy" and then "make app".
 
-- run: This will startup the core infrastructure of the project first
+- run: This will call core.
 - deploy: This will create the Kafka topics, schema entries, all the Hive catalogs, Flink tables, flink inserts jobs etc.
 - run_app: Run workload creator/the Golang app.
 - stop_app: Stop the workload creator/the Golang app.
@@ -33,24 +33,18 @@ help:
 
 
 build: 
-#	cd connect; make build
+	cd connect; make build
 	cd flink; make build;
 	cd sql-client; make build
-#	cd ../app; make build	
 
-
-
-# Run the core, followed by deploy and then app
-run: core
-
-core:
+run:
 	docker compose -p devlab up -d broker schema-registry control-center connect \
 		ksqldb-server ksqldb-cli kcat \
-		flink-sql-client mongodb postgres paradedb hive-metastore \
-		pyiceberg duckdb mysqlcdc postgrescdc 
+		flink-jobmanager flink-taskmanager flink-sql-client postgres hive-metastore \
+		minio mc pyiceberg duckdb \
+		mysqlcdc postgrescdc mongodb
 
-deploy: createcat createtopics 
-#deploycdcflink
+deploy: createtopics createcat deploycdcflink deployflink
 
 createcat:
 	docker compose exec flink-sql-client sql-client.sh -f /sql/creCat.sql
@@ -66,32 +60,22 @@ deployflink:
 
 run_app:
 	cd ../app; ./runs_avro.sh
-#	docker compose -p devlab up -d app
-
-rdb:
-	docker compose down mysqlcdc mongodb postgres postgrescdc paradedb minio
-	cd data; cd minio; rm -rf * ;rm -rf .minio.sys ;rm -rf .DS*
-	cd data; cd postgres; rm -rf * ;rm -rf .DS*
-	cd data; cd paradedb; rm -rf * ;rm -rf .DS*
-	cd data; cd postgrescdc; rm -rf * ;rm -rf .DS*
-	cd data; cd mysqlcdc; rm -rf * ;rm -rf .DS*
-	cd data; cd mongodb; rm -rf * ;rm -rf .DS*
-	docker compose -p devlab up mysqlcdc mongodb postgres postgrescdc paradedb minio -d
-
-stop_app:
-	docker compose -p devlab stop app
 
 stop:
 	docker compose stop
 
+start:
+	docker compose start
+
 down:	
 	docker compose down
-	cd data; cd minio; rm -rf * ;rm -rf .minio.sys ;rm -rf .DS*
-	cd data; cd postgres; rm -rf * ;rm -rf .DS*
-	cd data; cd paradedb; rm -rf * ;rm -rf .DS*
-	cd data; cd postgrescdc; rm -rf * ;rm -rf .DS*
-	cd data; cd mysqlcdc; rm -rf * ;rm -rf .DS*
-	cd data; cd mongodb; rm -rf * ;rm -rf .DS*
+	cd data; rm -rf minio 
+	cd data; rm -rf mongodb 
+	cd data; rm -rf paradedb 
+	cd data; rm -rf postgres
+	cd data; rm -rf postgrescdc
+	cd data; rm -rf mysqlcdc
+	cd data; rm -rf mongodb
 
 ps:
 	docker compose ps
@@ -99,8 +83,8 @@ ps:
 logs:
 	docker compose logs
 
-monitor_app:
-	docker compose logs -f app |grep Record
+logsf:
+	docker compose logs -f
 
 watch:
 	watch docker compose ps
@@ -110,10 +94,3 @@ ksql:
 
 fsql:
 	docker compose exec flink-sql-client sql-client.sh
-
-start_pdb:
-	docker compose -p devlab up -d paradedb
-stop_pdb:
-	docker compose -p devlab stop paradedb
-monitor_pdb:
-	docker compose logs -f paradedb

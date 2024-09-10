@@ -1,8 +1,9 @@
+
 .DEFAULT_GOAL := help
 include ../.env
 
-IMAGE_NAME=apacheflink_sqlpod
-VERSION=1.18.1-scala_2.12-java11-d
+IMAGE_NAME=apacheflink-base
+VERSION=1.18.1-scala_2.12-java11
 
 define HELP
 
@@ -18,5 +19,5 @@ help:
 .PHONY: help
 
 build:
-	sudo docker build --build-arg REPO_NAME=${REPO_NAME} -t ${REPO_NAME}/${IMAGE_NAME}:${VERSION} . 
+	sudo docker build -t ${REPO_NAME}/${IMAGE_NAME}:${VERSION} .
 
