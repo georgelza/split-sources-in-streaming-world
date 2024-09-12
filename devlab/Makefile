@@ -42,7 +42,8 @@ run:
 		ksqldb-server ksqldb-cli kcat \
 		flink-jobmanager flink-taskmanager flink-sql-client postgres hive-metastore \
 		minio mc pyiceberg duckdb \
-		mysqlcdc postgrescdc mongodb
+		mysqlcdc postgrescdc 
+#mongodb
 
 deploy: createtopics createcat deploycdcflink deployflink
 

@@ -33,6 +33,7 @@ creConnect/.pwdmongoatlas
 # Folders where jar and *.tar.gz files will be staged, not to be included in git sync.
 # also excluding these via *.tar.gz and *.jar definitions higher up.
 
+example/*
 app/data/*
 app/example/*.parquet
 

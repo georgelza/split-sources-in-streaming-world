@@ -22,20 +22,20 @@ For reference see the blog-doc/diagram's folder for some diagrams depicting the 
 
 1. So first, I modified the app (Golang) to push the salespayments to either Kafka salespayments topic (as current) or into a salespayments table in the sales database (Mysqldb 8.x), controlled by Mysql_enabled setting in the *_app.json file.
 
-2. Next up, need to extend my Flink stack (Flink Jobserver and Taskmanager and the Flink Sql client) and add the right Flink CDC/Jar files, allowing us to configure FlinkCDC from the source salespayments table into a Flink Table (t_f_cdc_salespayments). 
+2. Next up, need to extend my Apache Flink stack (Flink Jobserver and Taskmanager and the Flink Sql client) and add the right Flink CDC/Jar files, allowing us to configure FlinkCDC from the source salespayments table into a Flink Table (t_f_cdc_salespayments). 
 
-3. We will also configure Flink to push this 2nd source (salespayments) now onwards onto a Kafak topic t_f_avro_salespayments vs where we origially source data from, thus still aligning with the original Kafka topic/s.
+3. We will also configure Flink to push this 2nd source (salespayments) now onwards onto a Kafak topic avro_salespayments vs where we origially source data from, thus still aligning with the original Kafka topic/s.
 
-4. As a small scope creap, I'm going to change our Stand Alone Apache Hive Metastore into a split design of a seperate Hive Server 2 & Hive Metastore configuration backed again by a Postgresql database.
+4. As a small scope creap, I'm going to change our Stand Alone Apache Hive Metastore into a split design of a seperate Hive Server 2 & Hive Metastore configuration backed again by a Postgresql database. - TO Be Done still.
 
 5. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
 
-6. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format on HDFS.
+6. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format now located on AWS S3 (simulated via a MinIO container).
 
 
 Ye... I think that will be a good start, and that will accomplish what we want to demostrate, a split source environment and using Apache Flink's CDC apabilities to ingest the data from the database and push it into a Flink Table's for further processing, joining with data from i.e: Kafka sources, a more pragmatic/realistic example.
 
-From here change into the devlab-hms-postgres directory and see the README.md file for more details.
+From here change into the devlab directory and see the README.md file for more details.
 
 (If anything is not clear, or something is broken, I keep on tinkering, then please email me).
 
@@ -83,6 +83,8 @@ Without these guys and their willingness to entertain allot of questions and som
     
 ```git push -u origin main```
 
+#### Results in
+
 Enumerating objects: 142, done.
 Counting objects: 100% (142/142), done.
 Delta compression using up to 10 threads
@@ -94,5 +96,6 @@ Total 142 (delta 27), reused 0 (delta 0), pack-reused 0
 fatal: the remote end hung up unexpectedly
 Everything up-to-date
     
-    
-issue:  ```git config http.postBuffer 524288000```
+#### Execute the following
+
+```git config http.postBuffer 524288000```
