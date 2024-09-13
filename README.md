@@ -77,7 +77,15 @@ Without these guys and their willingness to entertain allot of questions and som
         ()
         ?
 
-    
+
+## NOTES:
+
+### Misc Reading Resources:
+
+- [Apache Paimon: Introducing Deletion Vectors](https://medium.com/@ipolyzos_/apache-paimon-introducing-deletion-vectors-584666ee90de) - Good article that covers how Paimon Table format works...
+
+
+
 
 ### For My Own notes: (When git does not want to work/sync failing)
     

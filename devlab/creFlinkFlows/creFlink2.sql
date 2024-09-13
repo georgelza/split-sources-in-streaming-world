@@ -1,5 +1,10 @@
 -- Usage for Table/SQL API
 
+
+-- https://medium.com/@ipolyzos_/apache-paimon-introducing-deletion-vectors-584666ee90de
+-- deletion-vectors.enabled = true -> use ORC file format.
+
+
 ------------------------------------------------------------------------------------
 -- Some More aggregations
 ------------------------------------------------------------------------------------

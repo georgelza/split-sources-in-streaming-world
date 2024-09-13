@@ -32,14 +32,14 @@ configs:
   creFlink:
     file: creFlinkFlows/creFlink.sql
 
-  hive-site:
-    file: conf/hive-site.xml
-  flink-conf-jm:
-    file: conf/flink-conf-jm.yaml
-  flink-conf-tm:
-    file: conf/flink-conf-tm.yaml
-  flink-conf-sc:
-    file: conf/flink-conf-sc.yaml
+  # hive-site:
+  #   file: conf/hive-site.xml
+  # flink-conf-jm:
+  #   file: conf/flink-conf-jm.yaml
+  # flink-conf-tm:
+  #   file: conf/flink-conf-tm.yaml
+  # flink-conf-sc:
+  #   file: conf/flink-conf-sc.yaml
 
 services:
   # Core Confluent Kafka bits
@@ -198,12 +198,13 @@ services:
         rest.bind-port: 8081
     volumes:
       - ./data/flink/job/artifacts:/opt/flink/usrlib
-    configs:
-      - source: hive-site
-        target: /opt/flink/conf/hive-site.xml
-        mode: 0644  
-        uid: "9999"
-        gid: "9999"
+    # configs:
+    #   - source: hive-site
+    #     target: /opt/flink/conf/hive-site.xml
+    #     mode: 0644  
+    #     uid: "9999"
+    #     gid: "9999"
+    user: "9999:9999"
     command: jobmanager
 
   flink-taskmanager:
@@ -222,12 +223,13 @@ services:
         taskmanager.numberOfTaskSlots: 10
     volumes:
       - ./data/flink/job/artifacts:/opt/flink/usrlib
-    configs:
-      - source: hive-site
-        target: /opt/flink/conf/hive-site.xml
-        mode: 0644
-        uid: "9999"
-        gid: "9999"
+    # configs:
+    #   - source: hive-site
+    #     target: /opt/flink/conf/hive-site.xml
+    #     mode: 0644
+    #     uid: "9999"
+    #     gid: "9999"
+    user: "9999:9999"
     command: taskmanager
 
   flink-sql-client:
@@ -243,23 +245,24 @@ services:
     configs:
       - source: creCat
         target: /sql/creCat.sql
-        mode: 4644
+        mode: 04644
       - source: creCdCFlink
         target: /sql/creCdc.sql
-        mode: 444
+        mode: 0444
       - source: creFlink
         target: /sql/creFlink.sql
-        mode: 444    
-      - source: hive-site
-        target: /opt/sql-client/conf/hive-site.xml
-        mode: 644  
-        uid: "9999"
-        gid: "9999"
-      - source: flink-conf-sc
-        target: /opt/flink/conf/flink-conf.yaml
-        mode: 644  
-        uid: "9999"
-        gid: "9999"
+        mode: 0444    
+      # - source: hive-site
+      #   target: /opt/sql-client/conf/hive-site.xml
+      #   mode: 0644  
+      #   uid: "9999"
+      #   gid: "9999"
+      # - source: flink-conf-sc
+      #   target: /opt/flink/conf/flink-conf.yaml
+      #   mode: 0644  
+      #   uid: "9999"
+      #   gid: "9999"
+    user: "9999:9999"
 
 
   # The below Iceberg bits come from Robbin Moffats Kafka to Iceberg blog

@@ -5,14 +5,19 @@ SHELL ["/bin/bash", "-c"]
 
 # this is where we have flink itself installed.
 WORKDIR /opt/flink
-USER root:root
 
+USER root:root
 
 RUN echo "--> Install JARs: Flink's S3 plugin" && \
     mkdir ./plugins/s3-fs-hadoop && \
     mv ./opt/flink-s3-fs-hadoop-1.18.1.jar ./plugins/s3-fs-hadoop/
 
 
+RUN mkdir -p /opt/flink/conf/
+COPY conf/flink-conf-jm.yaml /opt/flink/conf/flink-conf.yaml
+COPY conf/hive-site.xml /opt/flink/conf/hive-site.xml
+
+# Search replace
 RUN echo "--> Enable SQL Client to find the job manager when running it from this image" && \
     sed -i "s/jobmanager.rpc.address: localhost/jobmanager.rpc.address: flink-jobmanager/g" ./conf/flink-conf.yaml
 

@@ -293,25 +293,3 @@ CREATE TABLE c_paimon.dev.t_unnested_sales WITH (
       `saleDateTime_Ltz`,
       `saleTimestamp_Epoc`
   FROM c_hive.db01.t_f_unnested_sales;
-
-
-------------------------------------------------------------------------------------
--- Some More aggregations
-------------------------------------------------------------------------------------
-CREATE OR REPLACE TABLE c_hive.db01.t_f_avro_sales_per_store_per_brand_per_5min_x (
-  `store_id` STRING,
-  `brand` STRING,
-  window_start  TIMESTAMP(3),
-  window_end TIMESTAMP(3),
-  `salesperbrand` BIGINT,
-  `totalperbrand` DOUBLE
-) WITH (
-    'connector'                     = 'kafka',
-    'topic'                         = 'avro_sales_per_store_per_brand_per_5min_x',
-    'properties.bootstrap.servers'  = 'broker:29092',
-    'properties.group.id'           = 'testGroup',
-    'scan.startup.mode'             = 'earliest-offset',
-    'value.format'                  = 'avro-confluent',
-    'value.avro-confluent.url'      = 'http://schema-registry:9081',
-    'value.fields-include'          = 'ALL'
-);

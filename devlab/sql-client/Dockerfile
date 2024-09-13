@@ -16,7 +16,10 @@ RUN echo "--> Creating SQL Client directories" && \
     mkdir -p /opt/sql-client/lib
 
 RUN echo "--> Copy SQL Client shell scripts"
+RUN mkdir -p /opt/sql-client/conf/
 COPY bin/sql-client.sh /opt/sql-client/
+COPY conf/flink-conf-sc.yaml /opt/flink/conf/flink-conf.yaml
+COPY conf/hive-site.xml /opt/sql-client/conf/hive-site.xml
 RUN chmod +x /opt/sql-client/sql-client.sh
 
 ENV SQL_CLIENT_HOME=/opt/sql-client
