@@ -35,13 +35,9 @@ pullall: os confluent flink db s3 misc #iop
 
 getall: 
 	cd build-hadoop-openjdk11-hdfs; make wget;
-	cd build-hive-openjdk8; make wget
-
-buildall: buildos buildopenjdk buildhadoop buildhive builddb # buildapp
 
 clean:
 	cd build-hadoop-openjdk11-hdfs; make clean
-	cd build-hive-openjdk8; make clean
 
 # Base images used along the way, used to build 2nd level images.
 # arm64/v8 used as base for all images except the app/*.
@@ -86,31 +82,21 @@ misc:
 	docker pull python:3.12-bookworm
 	docker pull codieplusplus/duckdb
 
-buildall: buildos buildopenjdk buildhadoop buildhive builddb buildflinkbase 
+buildall: buildos buildopenjdk buildhadoop builddb buildflinkbase 
 
 # Build images, not 100% all of whats needed, but these are all common images.
 buildos:
 	cd ./build-ubuntu-os-20.04; make build
 
 buildopenjdk:
-	cd build-ubuntu-os-openjdk8; pwd; make build
 	cd build-ubuntu-os-openjdk11; pwd; make build
 
 buildhadoop:
 	cd build-hadoop-openjdk11-hdfs; make buildbase
 	cd build-hadoop-openjdk11-hdfs; make build
 
-buildhive:
-	cd build-hive-openjdk8;  make basehadoop
-	cd build-hive-openjdk8;  make basehive
-	cd build-hive-openjdk8;  make build
-
 builddb:
 	cd build-postgres-12.0; make build
 
-builddb:
+buildflinkbase:
 	cd build-flink-base; make build
-
-
-# Used if desired to create fake JSON based data
-# docker pull shadowtraffic/shadowtraffic:0.6.0

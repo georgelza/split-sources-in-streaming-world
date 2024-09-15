@@ -5,20 +5,31 @@
 #
 # inspect network: docker network inspect devlab
 #
-
 configs:
-
-  postgres_conf:
-    file: conf/postgresql.conf
-  postgres_hba:
-    file: conf/pg_hba.conf
-
+  sql_stream:
+    file: ../crekSqlFlows/creStreams.sql
   creCat:
-    file: creFlinkFlows/creCat.sql
-  creCdCFlink:
-    file: creFlinkFlows/creCdc.sql
-  creFlink:
-    file: creFlinkFlows/creFlink.sql
+    file: ./creFlinkFlows/creCat.sql
+  creFlink_1:
+    file: ./creFlinkFlows/creFlink_1.sql
+  creFlink_2:
+    file: ./creFlinkFlows/creFlink_2.sql
+  app_file:
+    file: ../app/conf/avro_app.json
+  kafka_file:
+    file: ../app/conf/avro_kafka.json
+  mongo_file:
+    file: ../app/conf/avro_mongo.json
+  seed_file:
+    file: ../app/conf/sit_seed.json
+  hive-site:
+    file: ./conf/hive-site.xml
+  flink-conf:
+    file: ./conf/flink-conf.yaml
+  postgres-conf:
+    file: ./conf/postgresql.conf
+  postgres-hba:
+    file: ./conf/pg_hba.conf
 
 services:
   # Core Confluent Kafka bits
@@ -70,7 +81,7 @@ services:
     depends_on:
       - broker
     ports:
-      - "9021:9021"     # -> Web UI console
+      - "9021:9021"
     environment:
       CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
       CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: 'connect:8083'
@@ -114,6 +125,8 @@ services:
       CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
       CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
+    # volumes:
+    #   - ./data/connect:/data
 
 
   # Confluent ksql server
@@ -147,6 +160,10 @@ services:
       - ksqldb-server
     entrypoint: /bin/sh
     tty: true
+    configs:
+      - source: sql_stream
+        target: /sql/creStreams.sql
+        mode: 444
 
   kcat:
     image: confluentinc/cp-kcat:7.6.1
@@ -156,66 +173,197 @@ services:
       - broker
     entrypoint: /bin/bash -i
     tty: true
-    # profiles:
-    #   - donotstart
+
 
   # Apache Flink bits    
   flink-jobmanager:
-    image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-d
+    image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-c
     container_name: flink-jobmanager
     hostname: flink-jobmanager
     depends_on:
       - hive-metastore
     ports:
       - 8081:8081     # -> Web UI console
+    command: jobmanager
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         rest.bind-port: 8081
-    user: "9999:9999"
-    command: jobmanager
+    configs:
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
 
   flink-taskmanager:
-    image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-d
+    image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-c
     hostname: flink-taskmanager
     depends_on:
       - flink-jobmanager
+    command: taskmanager
     deploy:
       replicas: 2
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 10
-    user: "9999:9999"
-    command: taskmanager
+    configs:
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
 
   flink-sql-client:
-    image: ${REPO_NAME}/apacheflink_sqlpod:1.18.1-scala_2.12-java11-d
+    image: ${REPO_NAME}/apacheflink_sqlpod:1.18.1-scala_2.12-java11-c
     container_name: flink-sql-client
     hostname: flink-sql-client
     depends_on:
       - flink-jobmanager
+      - flink-taskmanager
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - FLINK_JOBMANAGER_HOST=flink-jobmanager
+      FLINK_JOBMANAGER_HOST: flink-jobmanager
     configs:
       - source: creCat
         target: /sql/creCat.sql
-        mode: 04644
-      - source: creCdCFlink
-        target: /sql/creCdc.sql
-        mode: 0444
-      - source: creFlink
-        target: /sql/creFlink.sql
-        mode: 0444    
-    user: "9999:9999"
+        mode: 444
+      - source: creFlink_1
+        target: /sql/creFlink_1.sql
+        mode: 444
+      - source: creFlink_2
+        target: /sql/creFlink_2.sql
+        mode: 444    
+      - source: hive-site
+        target: /opt/sql-client/conf/hive-site.xml
+        mode: 444  
+      - source: flink-conf
+        target: /opt/flink/conf/flink-conf.yaml
+        mode: 444  
+
+  # First we will start with a local (HDFS) file based Catalog for Apache Paimon
+
+  #### Hadoop / HDFS ####
+  #
+  # The Namenode UI can be accessed at http://localhost:9870/⁠ and 
+  # the ResourceManager UI can be accessed at http://localhost:8089/⁠
+  namenode:
+    image: ${REPO_NAME}/hadoop-namenode-3.3.5-java11:1.0.0
+    container_name: namenode
+    volumes:
+      - ./data/hdfs/namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    env_file:
+      - ./hdfs/hadoop.env
+    ports:
+      - "9870:9870"  # NameNode Web UI
+
+  resourcemanager:
+    image: ${REPO_NAME}/hadoop-resourcemanager-3.3.5-java11:1.0.0
+    container_name: resourcemanager
+    restart: on-failure
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - datanode3
+      - datanode4
+      - datanode5
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    env_file:
+      - ./hdfs/hadoop.env
+    ports:
+      - "8089:8088" # Resource Manager Web UI
+  
+  historyserver:
+    image: ${REPO_NAME}/hadoop-historyserver-3.3.5-java11:1.0.0
+    container_name: historyserver
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    volumes:
+      - ./data/hdfs/historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hdfs/hadoop.env
+    ports:
+      - "8188:8188"
+  
+  nodemanager1:
+    image: ${REPO_NAME}/hadoop-nodemanager-3.3.5-java11:1.0.0
+    container_name: nodemanager1
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    env_file:
+      - ./hdfs/hadoop.env
+    ports:
+      - "8042:8042"   # NodeManager Web UI
+  
+  datanode1:
+    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
+    container_name: datanode1
+    depends_on:
+      - namenode
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    volumes:
+      - ./data/hdfs/datanode1:/hadoop/dfs/data
+    env_file:
+      - ./hdfs/hadoop.env
+  
+  datanode2:
+    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
+    container_name: datanode2
+    depends_on:
+      - namenode
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    volumes:
+      - ./data/hdfs/datanode2:/hadoop/dfs/data
+    env_file:
+      - ./hdfs/hadoop.env
+  
+  datanode3:
+    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
+    container_name: datanode3
+    depends_on:
+      - namenode
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    volumes:
+      - ./data/hdfs/datanode3:/hadoop/dfs/data
+    env_file:
+      - ./hdfs/hadoop.env
+
+  datanode4:
+    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
+    container_name: datanode4
+    depends_on:
+      - namenode
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+    volumes:
+      - ./data/hdfs/datanode4:/hadoop/dfs/data
+    env_file:
+      - ./hdfs/hadoop.env
+      
+  datanode5:
+    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
+    container_name: datanode5
+    depends_on:
+      - namenode
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}  
+    volumes:
+      - ./data/hdfs/datanode5:/hadoop/dfs/data
+    env_file:
+      - ./hdfs/hadoop.env
 
 
   # The below Iceberg bits come from Robbin Moffats Kafka to Iceberg blog
@@ -231,14 +379,13 @@ services:
       - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}
       - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
     ports:
-      - 9001:9001  # Web UI console
+      - 9001:9001  # Web console
       - 9000:9000  # api address
     command: ["server", "/data", "--console-address", ":9001"]
     volumes:
       - ./data/minio:/data
     # profiles:
     #   - donotstart
-
 
   # https://hub.docker.com/r/minio/mc
   # Minio Client
@@ -260,43 +407,37 @@ services:
       /usr/bin/mc mb minio/${S3_BUCKET};
       tail -f /dev/null
       " 
-    # profiles:
-    #   - donotstart
 
 
-  # Datastore for Hive Metastore - Standalone 
+  # Datastore for Hive Metastore - Standalone
   postgres:
     image: ${REPO_NAME}/postgres-12.0:1.0.0
     container_name: postgres
     hostname: postgres
-    ports:
-      - ${DATABASE_PORT}:5432
     environment:
       - POSTGRES_USER=${DATABASE_USER}
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_DB=${DATABASE_DB}
-    healthcheck:
-      test: ["CMD", "psql", "-U", "${DATABASE_USER}", "${DATABASE_DB}"]
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     configs:
-      - source: postgres_conf
-        target: /etc/postgresql/postgresql.conf
-        mode: 444    
-      - source: postgres_hba
-        target: /etc/postgresql/data/pg_hba.conf
-        mode: 444
-    command: -c config_file=/etc/postgresql/postgresql.conf
+      - source: postgres-conf
+        target: etc/postgresql/postgresql.conf
+        mode: 444      
+      - source: postgres-hba
+        target: /etc/postgresql/pg_hba.conf
+        mode: 444      
+    ports:
+      - ${DATABASE_PORT}:5432
+    # profiles:
+    #   - donotstart
 
 
   # Catalog for Flink
   # https://hub.docker.com/r/naushadh/hive-metastore
+  # https://github.com/naushadh/hive-metastore
+
   # https://github.com/naushadh/hive-metastore/tree/main
-  # https://github.com/naushadh/hive-metastore/blob/main/Dockerfile
-  #
-  # Hive Metastore 3.0.0
-  # HADOOP_VERSION=3.3.0
-  # POSTGRES_CONNECTOR_VERSION=42.2.18
   hive-metastore:
     image: naushadh/hive-metastore:latest
     container_name: hms
@@ -318,232 +459,20 @@ services:
     ports:
       - 9083:9083
 
-
-  # Iceberg Python Client
-  pyiceberg:
-    image: python:3.12-bookworm
-    container_name: pyiceberg
-    hostname: pyiceberg
-    depends_on:
-      hive-metastore:
-        condition: service_healthy
-    environment:
-      PYICEBERG_CATALOG__DEFAULT__URI: thrift://hms:9083
-      PYICEBERG_CATALOG__DEFAULT__S3__ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      PYICEBERG_CATALOG__DEFAULT__S3__SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      PYICEBERG_CATALOG__DEFAULT__S3__PATH_STYLE_ACCESS: true
-      PYICEBERG_CATALOG__DEFAULT__S3__ENDPOINT: ${S3_ENDPOINT_URL}
-    entrypoint: >
-      /bin/sh -c "
-      pip install pyiceberg["s3fs,hive,pyarrow"];
-      sleep infinity
-      "
-#    profiles:
-#      - manual_start  # This service will not start automatically
-
-
-# Used as query engine into the Minio object store.
-  duckdb:
-    image: codieplusplus/duckdb
-    container_name: duckdb
-    hostname: duckdb
-    restart: no
-    entrypoint: tail -f /dev/null
-
-
-#### Hadoop / HDFS ####
-  #
-  # The Namenode UI can be accessed at http://localhost:9870/⁠ and 
-  # the ResourceManager UI can be accessed at http://localhost:8089/⁠
-  namenode:
-    image: ${REPO_NAME}/hadoop-namenode-3.3.5-java11:1.0.0
-    container_name: namenode
-    volumes:
-      - ./data/hdfs/namenode:/hadoop/dfs/name
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "9870:9870"  # NameNode Web UI
-
-  resourcemanager:
-    image: ${REPO_NAME}/hadoop-resourcemanager-3.3.5-java11:1.0.0
-    container_name: resourcemanager
-    restart: on-failure
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-      - datanode3
-      - datanode4
-      - datanode5
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "8089:8088" # Resource Manager Web UI
-  
-  historyserver:
-    image: ${REPO_NAME}/hadoop-historyserver-3.3.5-java11:1.0.0
-    container_name: historyserver
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/historyserver:/hadoop/yarn/timeline
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "8188:8188"
-  
-  nodemanager1:
-    image: ${REPO_NAME}/hadoop-nodemanager-3.3.5-java11:1.0.0
-    container_name: nodemanager1
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "8042:8042"   # NodeManager Web UI
-  
-  datanode1:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode1
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode1:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-  
-  datanode2:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode2
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode2:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-  
-  datanode3:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode3
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode3:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-
-  datanode4:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode4
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode4:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-      
-  datanode5:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode5
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}  
-    volumes:
-      - ./data/hdfs/datanode5:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-
-
-  # Reconsider
-  # https://hub.docker.com/r/mysql/mysql-server
-  # image: mysql/mysql-server:8.0.32-aarch64
-  mysqlcdc:
-    image: mysql:8.0
-    hostname: mysqlcdc
-    container_name: mysqlcdc
-    ports:
-      - ${MYSQL_HOST_PORT}:3306
-    environment:
-      MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DB}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
-      TZ: "Africa/Pretoria"
-    healthcheck:
-      test: ["CMD", 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p$$MYSQL_ROOT_PASSWORD' ]
-      timeout: 20s
-      retries: 10
-    volumes:
-      - ./data/mysqlcdc:/var/lib/mysql  
-      - ./sql/mysqlcdc:/docker-entrypoint-initdb.d
-    # configs:
-    #   - source: mysql_conf
-    #     target: /etc/mysql/conf.d
-    #     mode: 444   
-    # profiles:
-    #   - donotstart
-
-
-  postgrescdc:
-    image: ${REPO_NAME}/postgres-12.0:1.0.0
-    hostname: postgrescdc
-    container_name: postgrescdc
-    ports:
-      - ${POSTGRES_PORT}:5432
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    healthcheck:
-      test: ["CMD", "psql", "-U", "${POSTGRES_USER}", "${POSTGRES_DB}"]
-    volumes:
-      - ./data/postgrescdc:/var/lib/postgresql/data
-      - ./sql/postgrescdc:/docker-entrypoint-initdb.d
-    configs:
-      - source: postgres_conf
-        mode: 444    
-      - source: postgres_hba
-        target: /etc/postgresql/data/pg_hba.conf
-        mode: 444
-    command: -c config_file=/etc/postgresql/postgresql.conf
-
-
-
-  # Used to test the local Kafka Connector/sinks into MongoDB or direct insert into MongoDB Collection.
-  mongodb:
-    image: mongodb/mongodb-atlas-local:7.0.5
-    hostname: mongodb
-    container_name: mongodb
-    ports:
-      - ${MONGO_HOST_PORT}:27017
-    volumes:
-      - ./data/mongodb:/data/db
-    # profiles:
-    #   - donotstart
-
+    
+  # watch 'docker exec shadowtraffic curl -s localhost:9400/metrics |grep events_sent'
+  # shadowtraffic:
+  #   image: shadowtraffic/shadowtraffic:0.6.0
+  #   container_name: shadowtraffic
+  #   hostname: shadowtraffic
+  #     #    profiles: ["shadowtraffic"]
+  #   env_file:
+  #     - shadowtraffic/license.env
+  #   volumes:
+  #     - ./shadowtraffic:/data
+  #   command: --config /data/kafka-retail.json
+  #   profiles:
+  #     - donotstart
 
 # Without a network explicitly defined, you hit this Hive/Thrift error
 # java.net.URISyntaxException Illegal character in hostname

@@ -4,7 +4,8 @@
 -- Case sentivity... need to match the case as per types/fs.go structs avro sections.
 
 -- Set checkpoint to happen every minute
-SET 'execution.checkpointing.interval' = '5s';
+SET 'execution.checkpointing.interval' = '60s';
+SET 'execution.checkpointing.interval' = '10s';
 
 -- Set this so that the operators are separate in the Flink WebUI.
 SET 'pipeline.operator-chaining.enabled' = 'false';
@@ -37,10 +38,10 @@ CREATE OR REPLACE TABLE c_hive.db01.t_k_avro_salesbaskets (
     ,'properties.bootstrap.servers'              = 'broker:29092'
     ,'properties.group.id'                       = 'testGroup'
     ,'scan.startup.mode'                         = 'earliest-offset'
-    ,'key.fields'                                = 'invoiceNumber'
-    ,'key.format'                                = 'raw'
     ,'value.format'                              = 'avro-confluent'
     ,'value.avro-confluent.schema-registry.url'  = 'http://schema-registry:9081'
+    ,'key.format'                                = 'raw'
+    ,'key.fields'                                = 'invoiceNumber'
     ,'value.fields-include'                      = 'ALL'
 );
 
@@ -59,13 +60,15 @@ CREATE OR REPLACE TABLE c_hive.db01.t_f_avro_salespayments (
      'connector'                               = 'upsert-kafka'
     ,'topic'                                   = 'avro_salespayments'
     ,'properties.bootstrap.servers'            = 'broker:29092'
-    ,'value.fields-include'                    = 'ALL'
     ,'value.format'                            = 'avro-confluent'
     ,'value.avro-confluent.schema-registry.url'= 'http://schema-registry:9081'
     ,'key.format'                              = 'raw'
     ,'properties.group.id'                     = 'mysqlcdcsourced' 
+    ,'value.fields-include'                    = 'ALL'
 );
 
+
+SET 'pipeline.name' = 'SalesPayments - (t_f_avro_salespayments) -> Kafka (avro_salespayments)';
 
 -- Source's created in creCdc.sql
 
@@ -137,9 +140,8 @@ CREATE OR REPLACE TABLE c_hive.db01.t_f_avro_salescompleted (
     PRIMARY KEY (`invoiceNumber`) NOT ENFORCED
 ) WITH (
      'connector'                               = 'upsert-kafka'
-    ,'topic'                                   = 't_f_avro_salescompleted'
+    ,'topic'                                   = 'avro_salescompleted'
     ,'properties.bootstrap.servers'            = 'broker:29092'
-    ,'value.fields-include'                    = 'ALL'
     ,'value.format'                            = 'avro-confluent'
     ,'value.avro-confluent.schema-registry.url'= 'http://schema-registry:9081'
     ,'key.format'                              = 'raw'
@@ -150,10 +152,10 @@ CREATE OR REPLACE TABLE c_hive.db01.t_f_avro_salescompleted (
 
 -- SET 'execution.runtime-mode' = 'streaming';
     
-SET 'pipeline.name' = 'Sales Completed Join - Output to Kafka Topic';
+SET 'pipeline.name' = 'SalesCompleted - (t_f_avro_salescompleted) -> Kafka (avro_salescompleted)';
 
 INSERT INTO c_hive.db01.t_f_avro_salescompleted
-select
+SELECT
         b.invoiceNumber,
         b.saleDateTime_Ltz,
         b.saleTimestamp_Epoc,
@@ -178,22 +180,22 @@ select
 -- unnest the salesBasket -> Output
 -- Our t_f_unnested_sales (OUTPUT) table which will push values to the CP Kafka topic.
 
-CREATE OR REPLACE TABLE c_hive.db01.t_f_unnested_sales (
-    `store_id`            STRING,
-    `product`             STRING,
-    `brand`               STRING,
-    `subtotal`            DOUBLE,
-    `category`            STRING,
-    `saleDateTime_Ltz`    STRING,
-    `saleTimestamp_Epoc`  STRING,
-    `saleTimestamp_WM`    AS TO_TIMESTAMP(FROM_UNIXTIME(CAST(`saleTimestamp_Epoc` AS BIGINT) / 1000)),
-    WATERMARK FOR `saleTimestamp_WM` AS `saleTimestamp_WM`,
-    PRIMARY KEY (`store_id`, `product`, `brand`) NOT ENFORCED
+CREATE OR REPLACE TABLE c_hive.db01.t_2_unnested_sales (
+    `invoicenumber`       STRING
+    ,`store_id`            STRING
+    ,`category`            STRING
+    ,`brand`               STRING
+    ,`product`             STRING
+    ,`subtotal`            DOUBLE
+    ,`saleDateTime_Ltz`    STRING
+    ,`saleTimestamp_Epoc`  STRING
+    ,`saleTimestamp_WM`    AS TO_TIMESTAMP(FROM_UNIXTIME(CAST(`saleTimestamp_Epoc` AS BIGINT) / 1000))
+    ,WATERMARK FOR `saleTimestamp_WM` AS `saleTimestamp_WM`
+    ,PRIMARY KEY (`invoicenumber`, `store_id`, `category`, `brand`, `product`) NOT ENFORCED
 ) WITH (
      'connector'                               = 'upsert-kafka'
-    ,'topic'                                   = 't_f_unnested_sales'
+    ,'topic'                                   = 'avro_unnested_sales'
     ,'properties.bootstrap.servers'            = 'broker:29092'
-    ,'value.fields-include'                    = 'ALL'
     ,'value.format'                            = 'avro-confluent'
     ,'value.avro-confluent.schema-registry.url'= 'http://schema-registry:9081'
     ,'key.format'                              = 'avro-confluent'
@@ -202,18 +204,20 @@ CREATE OR REPLACE TABLE c_hive.db01.t_f_unnested_sales (
     ,'value.fields-include'                    = 'ALL'
 );
 
+-- -- If the Primary key is multiple columns then you can't use raw format.
 
-SET 'pipeline.name' = 'Sales Completed, Unnested Basket - Output to Kafka Topic';
+SET 'pipeline.name' = 'SalesUnnested Basket - (t_2_unnested_sales) -> Kafka (avro_unnested_sales)';
 
-INSERT INTO c_hive.db01.t_f_unnested_sales
+INSERT INTO c_hive.db01.t_2_unnested_sales
   SELECT
-      `store`.`id` as `store_id`,
-      bi.`name` AS `product`,
-      bi.`brand` AS `brand`,
-      bi.`subtotal` AS `subtotal`,
-      bi.`category` AS `category`,
-      `saleDateTime_Ltz` as saleDateTime_Ltz,
-      `saleTimestamp_Epoc` as saleTimestamp_Epoc
+      `invoiceNumber`       AS `invoicenumber`,
+      `store`.`id`          AS `store_id`,
+      bi.`category`         AS `category`,
+      bi.`brand`            AS `brand`,
+      bi.`name`             AS `product`,
+      bi.`subtotal`         AS `subtotal`,
+      `saleDateTime_Ltz`    as saleDateTime_Ltz,
+      `saleTimestamp_Epoc`  as saleTimestamp_Epoc
     FROM c_hive.db01.t_f_avro_salescompleted  -- assuming avro_salescompleted is a table function
     CROSS JOIN UNNEST(`basketItems`) AS bi;
 
@@ -222,7 +226,7 @@ INSERT INTO c_hive.db01.t_f_unnested_sales
 -- Apache Paimon outputs
 ------------------------------------------------------------------------
 
-SET 'pipeline.name' = 'Sales Basket Source - Output to Paimon Table';
+SET 'pipeline.name' = 'SalesBasket (t_salesbaskets) -> Paimon (c_paimon.t_salesbaskets)';
 
 CREATE TABLE c_paimon.dev.t_salesbaskets WITH (
     'file.format' = 'avro'
@@ -242,7 +246,7 @@ CREATE TABLE c_paimon.dev.t_salesbaskets WITH (
   FROM c_hive.db01.t_k_avro_salesbaskets;
 
 
-SET 'pipeline.name' = 'Sales Payments Source - Output to Paimon Table';
+SET 'pipeline.name' = 'SalesPayments (t_salespayments) -> Paimon (c_paimon.dev.t_salespayments)';
 
 CREATE TABLE c_paimon.dev.t_salespayments AS
   SELECT 
@@ -255,7 +259,7 @@ CREATE TABLE c_paimon.dev.t_salespayments AS
   FROM c_hive.db01.t_f_avro_salespayments;
 
 
-SET 'pipeline.name' = 'Sales Completed - Output to Paimon Table';
+SET 'pipeline.name' = 'SalesCompleted (t_salescompleted) -> Paimon (c_paimon.dev.t_salescompleted)';
 
 CREATE TABLE c_paimon.dev.t_salescompleted WITH (
     'file.format' = 'avro'
@@ -279,17 +283,17 @@ CREATE TABLE c_paimon.dev.t_salescompleted WITH (
    FROM c_hive.db01.t_f_avro_salescompleted;
 
 
-SET 'pipeline.name' = 'Unnested Sales Baskets - Output to Paimon Target';
+-- SET 'pipeline.name' = 'SalesUnnested Basket (t_unnested_sales) -> Paimon (c_paimon.dev.t_unnested_sales)';
 
 CREATE TABLE c_paimon.dev.t_unnested_sales WITH (
-    'bucket'      = '4',
-    'bucket-key'  = 'store_id'
+    'file.format' = 'parquet'
   ) AS SELECT 
+      `invoicenumber`,
       `store_id`,
+      `category`,
       `product` ,
       `brand` ,
       `subtotal`,
-      `category`,
       `saleDateTime_Ltz`,
       `saleTimestamp_Epoc`
-  FROM c_hive.db01.t_f_unnested_sales;
+  FROM c_hive.db01.t_2_unnested_sales;

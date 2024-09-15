@@ -35,16 +35,14 @@ creConnect/.pwdmongoatlas
 
 example/*
 app/data/*
-app/example/*.parquet
+
 
 devlab/data/*
 
 devlab/flink/stage/*
 devlab/sql-client/stage/*
 
-infrastructure/build-hive-openjdk8/basehadoop/stage/*
-infrastructure/build-hive-openjdk8/basehive/stage/*
-infrastructure/build-hive-openjdk8/data/*
+infrastructure/build-hadoop-openjdk11-hdfs/base/stage/*
 
 
 # split-sources-in-streaming-world
