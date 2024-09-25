@@ -43,6 +43,24 @@ georgelza@gmail.com
 
 [Split Data source in a streaming solution](https://github.com/georgelza/split-sources-in-streaming-world.git)
 
+
+## Bulding and Running this project
+
+The following steps are the process required to get the project up and running. - >NOTE this was build on a Mac M1 Pro. If you running on Intel please go through the Dockerfiles and changed the dockerfile to use the intel/amd docker images, similarly check the infrastructure/Makefile in the getall and pullall steps.
+
+1. search the project subdirectory structure and replace repo_owner=georgelza with your github username.
+2. change into infrastructure.
+3. make getall
+4. make pullall
+5. make buildall
+6. change into devlab
+7. make build
+8. make run
+9. make run  -> you might need to reco this one a couple of times until the stack is stable.
+10. make deploy
+11. make run_app
+
+
 ## Credits... due.
 
 Without these guys and their willingness to entertain allot of questions and some times siply dumb ideas and helping me slowly onto the right path all of this would simply not have been possible.
