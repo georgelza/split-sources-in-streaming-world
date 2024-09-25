@@ -72,8 +72,8 @@ Without these guys and their willingness to entertain allot of questions and som
 
     Ian Engelbrecht,
         VeeAM
-        ()
-        ?
+        (Manager , Technical Sales at Veeam Software English Africa)
+        https://www.linkedin.com/in/ian-veeam/
 
 
 ## NOTES:

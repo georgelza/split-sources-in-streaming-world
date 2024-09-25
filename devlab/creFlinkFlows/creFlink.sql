@@ -215,8 +215,8 @@ INSERT INTO c_hive.db01.t_unnested_sales
       ,bi.`brand`            AS `brand`
       ,bi.`name`             AS `product`
       ,bi.`subtotal`         AS `subtotal`
-      ,`saleDateTime_Ltz`    as saleDateTime_Ltz
-      ,`saleTimestamp_Epoc`  as saleTimestamp_Epoc
+      ,`saleDateTime_Ltz`    AS saleDateTime_Ltz
+      ,`saleTimestamp_Epoc`  AS saleTimestamp_Epoc
     FROM c_hive.db01.t_f_avro_salescompleted  -- assuming avro_salescompleted is a table function
     CROSS JOIN UNNEST(`basketItems`) AS bi;
 
