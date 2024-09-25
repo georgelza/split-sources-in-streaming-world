@@ -21,11 +21,11 @@ CREATE DATABASE db01;
 USE CATALOG default_catalog;
 
 CREATE CATALOG c_paimon WITH (
-  'type'                        = 'paimon',
-  'catalog-type'                = 'hadoop',     
-  'warehouse'                   = 'hdfs://namenode:9000/paimon/',
-  'property-version'            = '1',
-  'table-default.file.format'   = 'parquet'
+     'type'                      = 'paimon'
+    ,'catalog-type'              = 'hive'
+    ,'hive-conf-dir'             = './conf/'
+    ,'warehouse'                 = 's3://paimon/'
+    ,'table-default.file.format' = 'avro'
 );
 
 -- -- With above we just create table on storage, table inherites type from catalog definition

@@ -31,13 +31,10 @@ help:
 	@echo "$$HELP"
 .PHONY: help
 
-pullall: os confluent flink db s3 misc #iop
+pullall: os confluent flink db s3 misc
 
-getall: 
-	cd build-hadoop-openjdk11-hdfs; make wget;
-
-clean:
-	cd build-hadoop-openjdk11-hdfs; make clean
+#buildall: buildos buildopenjdk buildhadoop buildhive builddb buildflinkbase 
+buildall: buildos buildflinkbase builddb
 
 # Base images used along the way, used to build 2nd level images.
 # arm64/v8 used as base for all images except the app/*.
@@ -57,21 +54,18 @@ confluent:
 
 flink:
 	docker pull arm64v8/flink:1.18.1-scala_2.12-java11
+#	docker pull flink:1.19.1-scala_2.12-java11
+#	docker pull flink:1.20.0-scala_2.12-java11
 
 db:
 	docker pull postgres:12	
 	docker pull mongodb/mongodb-atlas-local:7.0.5
-	docker pull mysql:9.0
+	docker pull mysql:8.0
 	docker pull paradedb/paradedb:latest
 
 s3: 
 	docker pull minio/minio:latest
 	docker pull minio/mc:latest
-
-iop:	
-	docker pull prom/prometheus:latest
-	docker pull prom/pushgateway:latest
-	docker pull grafana/grafana:latest
 
 misc:
 	docker pull golang:1.22
@@ -82,21 +76,12 @@ misc:
 	docker pull python:3.12-bookworm
 	docker pull codieplusplus/duckdb
 
-buildall: buildos buildopenjdk buildhadoop builddb buildflinkbase 
-
 # Build images, not 100% all of whats needed, but these are all common images.
 buildos:
 	cd ./build-ubuntu-os-20.04; make build
 
-buildopenjdk:
-	cd build-ubuntu-os-openjdk11; pwd; make build
-
-buildhadoop:
-	cd build-hadoop-openjdk11-hdfs; make buildbase
-	cd build-hadoop-openjdk11-hdfs; make build
+buildflinkbase:
+	cd build-flink-base; make build
 
 builddb:
 	cd build-postgres-12.0; make build
-
-buildflinkbase:
-	cd build-flink-base; make build

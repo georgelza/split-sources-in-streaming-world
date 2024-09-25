@@ -41,17 +41,15 @@ run:
 	docker compose -p devlab up -d broker schema-registry control-center connect \
 		ksqldb-server ksqldb-cli kcat \
 		flink-jobmanager flink-taskmanager flink-sql-client postgres hive-metastore \
-		namenode resourcemanager historyserver nodemanager1 datanode1 datanode2 datanode3 datanode4 datanode5 \
-		minio mc pyiceberg duckdb \
-		mysqlcdc postgrescdc 
-#mongodb
-
+		minio mc \
+		mysqlcdc postgrescdc mongodb
+#mongodb pyiceberg duckdb 
 
 deploy: createtopics createcat deploycdcflink deployflink
 
 createtopics:
 	cd creTopics; ./creTopics.sh
-
+	
 createcat:
 	docker compose exec flink-sql-client sql-client.sh -f /sql/creCat.sql
 

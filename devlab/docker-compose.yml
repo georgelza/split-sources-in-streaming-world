@@ -7,6 +7,10 @@
 #
 
 configs:
+  hive-site:
+    file: conf/hive-site.xml
+  flink-conf-sc:
+    file: conf/flink-conf-sc.yaml
 
   postgres_conf:
     file: conf/postgresql.conf
@@ -19,6 +23,7 @@ configs:
     file: creFlinkFlows/creCdc.sql
   creFlink:
     file: creFlinkFlows/creFlink.sql
+
 
 services:
   # Core Confluent Kafka bits
@@ -156,8 +161,7 @@ services:
       - broker
     entrypoint: /bin/bash -i
     tty: true
-    # profiles:
-    #   - donotstart
+
 
   # Apache Flink bits    
   flink-jobmanager:
@@ -173,10 +177,33 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - |
         FLINK_PROPERTIES=
+        table.catalog-store.kind: file
+        table.catalog-store.file.path: /opt/flink/conf/catalogs
+        fs.s3a.access.key: ${AWS_ACCESS_KEY_ID}
+        fs.s3a.secret.key: ${AWS_SECRET_ACCESS_KEY}
+        fs.s3a.endpoint: ${S3_ENDPOINT_URL}
+        fs.s3a.path.style.access: true
+        env.java.opts.all: --add-exports=java.base/sun.net.util=ALL-UNNAMED --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.text=ALL-UNNAMED --add-opens=java.base/java.time=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED
+        jobmanager.rpc.port: 6123
+        jobmanager.bind-host: 0.0.0.0
+        jobmanager.memory.flink_size: 1750m
         jobmanager.rpc.address: flink-jobmanager
+        jobmanager.execution.failover-strategy: region
+        taskmanager.bind-host: 0.0.0.0
+        taskmanager.memory.flink_size: 1750m
+        taskmanager.numberOfTaskSlots: 10
+        parallelism.default: 1
+        rest.address: 0.0.0.0
+        rest.bind-address: 0.0.0.0
         rest.bind-port: 8081
-    user: "9999:9999"
+        blob.server.port: 6124
+        query.server.port: 6125
+    configs:
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
     command: jobmanager
+
 
   flink-taskmanager:
     image: ${REPO_NAME}/apacheflink:1.18.1-scala_2.12-java11-d
@@ -192,8 +219,18 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 10
-    user: "9999:9999"
+        table.catalog-store.kind: file
+        table.catalog-store.file.path: /opt/flink/conf/catalogs
+        fs.s3a.access.key: ${AWS_ACCESS_KEY_ID}
+        fs.s3a.secret.key: ${AWS_SECRET_ACCESS_KEY}
+        fs.s3a.endpoint: ${S3_ENDPOINT_URL}
+        fs.s3a.path.style.access: true
+    configs:
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
     command: taskmanager
+
 
   flink-sql-client:
     image: ${REPO_NAME}/apacheflink_sqlpod:1.18.1-scala_2.12-java11-d
@@ -204,19 +241,34 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - FLINK_JOBMANAGER_HOST=flink-jobmanager
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        table.catalog-store.kind: file
+        table.catalog-store.file.path: /opt/flink/conf/catalogs
+        fs.s3a.access.key: ${AWS_ACCESS_KEY_ID}
+        fs.s3a.secret.key: ${AWS_SECRET_ACCESS_KEY}
+        fs.s3a.endpoint: ${S3_ENDPOINT_URL}
+        fs.s3a.path.style.access: true
     configs:
       - source: creCat
         target: /sql/creCat.sql
-        mode: 04644
+        mode: 0644
       - source: creCdCFlink
         target: /sql/creCdc.sql
         mode: 0444
       - source: creFlink
         target: /sql/creFlink.sql
         mode: 0444    
-    user: "9999:9999"
-
+      - source: hive-site
+        target: /opt/flink/conf/hive-site.xml
+        mode: 444  
+      - source: hive-site
+        target: /opt/sql-client/conf/hive-site.xml
+        mode: 444  
+      - source: flink-conf-sc
+        target: /opt/flink/conf/flink-conf.yaml
+        mode: 444  
 
   # The below Iceberg bits come from Robbin Moffats Kafka to Iceberg blog
   # https://www.decodable.co/blog/kafka-to-iceberg-with-flink
@@ -236,8 +288,6 @@ services:
     command: ["server", "/data", "--console-address", ":9001"]
     volumes:
       - ./data/minio:/data
-    # profiles:
-    #   - donotstart
 
 
   # https://hub.docker.com/r/minio/mc
@@ -260,8 +310,6 @@ services:
       /usr/bin/mc mb minio/${S3_BUCKET};
       tail -f /dev/null
       " 
-    # profiles:
-    #   - donotstart
 
 
   # Datastore for Hive Metastore - Standalone 
@@ -289,7 +337,8 @@ services:
     command: -c config_file=/etc/postgresql/postgresql.conf
 
 
-  # Catalog for Flink
+  # Catalog for Flink -> Hive Metastore - Standalone
+  #
   # https://hub.docker.com/r/naushadh/hive-metastore
   # https://github.com/naushadh/hive-metastore/tree/main
   # https://github.com/naushadh/hive-metastore/blob/main/Dockerfile
@@ -319,163 +368,6 @@ services:
       - 9083:9083
 
 
-  # Iceberg Python Client
-  pyiceberg:
-    image: python:3.12-bookworm
-    container_name: pyiceberg
-    hostname: pyiceberg
-    depends_on:
-      hive-metastore:
-        condition: service_healthy
-    environment:
-      PYICEBERG_CATALOG__DEFAULT__URI: thrift://hms:9083
-      PYICEBERG_CATALOG__DEFAULT__S3__ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      PYICEBERG_CATALOG__DEFAULT__S3__SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      PYICEBERG_CATALOG__DEFAULT__S3__PATH_STYLE_ACCESS: true
-      PYICEBERG_CATALOG__DEFAULT__S3__ENDPOINT: ${S3_ENDPOINT_URL}
-    entrypoint: >
-      /bin/sh -c "
-      pip install pyiceberg["s3fs,hive,pyarrow"];
-      sleep infinity
-      "
-#    profiles:
-#      - manual_start  # This service will not start automatically
-
-
-# Used as query engine into the Minio object store.
-  duckdb:
-    image: codieplusplus/duckdb
-    container_name: duckdb
-    hostname: duckdb
-    restart: no
-    entrypoint: tail -f /dev/null
-
-
-#### Hadoop / HDFS ####
-  #
-  # The Namenode UI can be accessed at http://localhost:9870/⁠ and 
-  # the ResourceManager UI can be accessed at http://localhost:8089/⁠
-  namenode:
-    image: ${REPO_NAME}/hadoop-namenode-3.3.5-java11:1.0.0
-    container_name: namenode
-    volumes:
-      - ./data/hdfs/namenode:/hadoop/dfs/name
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "9870:9870"  # NameNode Web UI
-
-  resourcemanager:
-    image: ${REPO_NAME}/hadoop-resourcemanager-3.3.5-java11:1.0.0
-    container_name: resourcemanager
-    restart: on-failure
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-      - datanode3
-      - datanode4
-      - datanode5
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "8089:8088" # Resource Manager Web UI
-  
-  historyserver:
-    image: ${REPO_NAME}/hadoop-historyserver-3.3.5-java11:1.0.0
-    container_name: historyserver
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/historyserver:/hadoop/yarn/timeline
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "8188:8188"
-  
-  nodemanager1:
-    image: ${REPO_NAME}/hadoop-nodemanager-3.3.5-java11:1.0.0
-    container_name: nodemanager1
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    env_file:
-      - conf/hadoop.env
-    ports:
-      - "8042:8042"   # NodeManager Web UI
-  
-  datanode1:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode1
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode1:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-  
-  datanode2:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode2
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode2:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-  
-  datanode3:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode3
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode3:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-
-  datanode4:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode4
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}
-    volumes:
-      - ./data/hdfs/datanode4:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-      
-  datanode5:
-    image: ${REPO_NAME}/hadoop-datanode-3.3.5-java11:1.0.0
-    container_name: datanode5
-    depends_on:
-      - namenode
-    environment:
-      - CLUSTER_NAME=${CLUSTER_NAME}  
-    volumes:
-      - ./data/hdfs/datanode5:/hadoop/dfs/data
-    env_file:
-      - conf/hadoop.env
-
-
   # Reconsider
   # https://hub.docker.com/r/mysql/mysql-server
   # image: mysql/mysql-server:8.0.32-aarch64
@@ -499,12 +391,6 @@ services:
     volumes:
       - ./data/mysqlcdc:/var/lib/mysql  
       - ./sql/mysqlcdc:/docker-entrypoint-initdb.d
-    # configs:
-    #   - source: mysql_conf
-    #     target: /etc/mysql/conf.d
-    #     mode: 444   
-    # profiles:
-    #   - donotstart
 
 
   postgrescdc:
@@ -541,8 +427,36 @@ services:
       - ${MONGO_HOST_PORT}:27017
     volumes:
       - ./data/mongodb:/data/db
-    # profiles:
-    #   - donotstart
+
+
+  # Iceberg Python Client
+  # pyiceberg:
+  #   image: python:3.12-bookworm
+  #   container_name: pyiceberg
+  #   hostname: pyiceberg
+  #   depends_on:
+  #     hive-metastore:
+  #       condition: service_healthy
+  #   environment:
+  #     PYICEBERG_CATALOG__DEFAULT__URI: thrift://hms:9083
+  #     PYICEBERG_CATALOG__DEFAULT__S3__ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  #     PYICEBERG_CATALOG__DEFAULT__S3__SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  #     PYICEBERG_CATALOG__DEFAULT__S3__PATH_STYLE_ACCESS: true
+  #     PYICEBERG_CATALOG__DEFAULT__S3__ENDPOINT: ${S3_ENDPOINT_URL}
+  #   entrypoint: >
+  #     /bin/sh -c "
+  #     pip install pyiceberg["s3fs,hive,pyarrow"];
+  #     sleep infinity
+  #     "
+
+
+# Used as query engine into the Minio object store.
+  # duckdb:
+  #   image: codieplusplus/duckdb
+  #   container_name: duckdb
+  #   hostname: duckdb
+  #   restart: no
+  #   entrypoint: tail -f /dev/null
 
 
 # Without a network explicitly defined, you hit this Hive/Thrift error

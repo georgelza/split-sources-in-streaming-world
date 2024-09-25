@@ -19,5 +19,5 @@ help:
 
 
 build:  
-	sudo docker build -t ${REPO_NAME}/${IMAGE_NAME}:${VERSION} .
+	docker build -t ${REPO_NAME}/${IMAGE_NAME}:${VERSION} .
 

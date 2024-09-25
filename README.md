@@ -30,7 +30,7 @@ For reference see the blog-doc/diagram's folder for some diagrams depicting the 
 
 5. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
 
-6. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format now located on HDFS (Experience challenges with S3, original plan).
+6. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format now located on AWS S3 (simulated via a MinIO container).
 
 
 Ye... I think that will be a good start, and that will accomplish what we want to demostrate, a split source environment and using Apache Flink's CDC apabilities to ingest the data from the database and push it into a Flink Table's for further processing, joining with data from i.e: Kafka sources, a more pragmatic/realistic example.
