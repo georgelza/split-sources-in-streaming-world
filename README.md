@@ -22,15 +22,13 @@ For reference see the blog-doc/diagram's folder for some diagrams depicting the 
 
 1. So first, I modified the app (Golang) to push the salespayments to either Kafka salespayments topic (as current) or into a salespayments table in the sales database (Mysqldb 8.x), controlled by Mysql_enabled setting in the *_app.json file.
 
-2. Next up, need to extend my Apache Flink stack (Flink Jobserver and Taskmanager and the Flink Sql client) and add the right Flink CDC/Jar files, allowing us to configure FlinkCDC from the source salespayments table into a Flink Table (t_f_cdc_salespayments). 
+2. Next up, need to extend my Apache Flink stack (Flink Jobserver and Taskmanager and the Flink Sql client) and add the right Flink CDC/Jar files, allowing us to configure FlinkCDC from the source salespayments table into a Flink Table (t_f_msqlcdc_salespayments or t_f_pgcdc_salespayments). 
 
 3. We will also configure Flink to push this 2nd source (salespayments) now onwards onto a Kafak topic avro_salespayments vs where we origially source data from, thus still aligning with the original Kafka topic/s.
 
-4. As a small scope creap, I'm going to change our Stand Alone Apache Hive Metastore into a split design of a seperate Hive Server 2 & Hive Metastore configuration backed again by a Postgresql database. - TO Be Done still.
+4. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
 
-5. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
-
-6. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format now located on AWS S3 (simulated via a MinIO container).
+5. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format now located on AWS S3 (simulated via a MinIO container).
 
 
 Ye... I think that will be a good start, and that will accomplish what we want to demostrate, a split source environment and using Apache Flink's CDC apabilities to ingest the data from the database and push it into a Flink Table's for further processing, joining with data from i.e: Kafka sources, a more pragmatic/realistic example.
