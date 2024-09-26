@@ -15,8 +15,6 @@ RUN echo "--> Install JARs: Flink's S3 plugin" && \
 
 
 RUN mkdir -p /opt/flink/conf/
-COPY conf/hive-site.xml /opt/flink/conf/hive-site.xml
-COPY conf/hive-site.xml /opt/sql-client/conf/hive-site.xml
 
 # Install JARs
 # See https://repo.maven.apache.org/maven2/org/apache/flink/
