@@ -364,7 +364,7 @@ services:
     command: hiveserver
 
 
-  # Launch Standalone Metastore With External RDBMS (Postgres/Oracle/MySql/MsSql)
+  # Launch Standalone Metastore With External RDBMS (Postgres)
   # If you want to use your own core-site.xml/hdfs-site.xml/yarn-site.xml or hive-site.xml for the service, 
   # you can provide the environment variable HIVE_CUSTOM_CONF_DIR for the command. For example:
   # Put the custom configuration file under the directory /opt/hive/conf and run:
