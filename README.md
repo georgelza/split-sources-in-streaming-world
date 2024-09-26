@@ -91,6 +91,8 @@ Without these guys and their willingness to entertain allot of questions and som
 
 - Good article that covers how Paimon Table format works...
 
+- [Debezium Architecture](https://debezium.io/documentation/reference/stable/architecture.html)
+- [Overview of Debezium](https://docs.redhat.com/en/documentation/red_hat_integration/2022.q3/html/getting_started_with_debezium/introduction-debezium)
 - Interesting read re Debezium, by the main custodium for last many... ;) yrs. [Change Data Capture Breaks Encapsulation”. Does it, though](https://www.decodable.co/blog/change-data-capture-breaks-encapsulation-does-it-though)
 
 
