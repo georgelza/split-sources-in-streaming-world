@@ -28,8 +28,9 @@ For reference see the blog-doc/diagram's folder for some diagrams depicting the 
 
 4. From Flink the aggregated data as per the original article will be pushed back onto Kafka topic's also.
 
-5. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Parquet file format now located on AWS S3 (simulated via a MinIO container).
+5. For the Analytical part we will again push the data down onto an Apache Paimon table format using the Apache Avro file format now located on AWS S3 (simulated via a MinIO container).
 
+6. A late add, I removed the pre packaged Hime Metastore and replaced it with a split tier Hiverserver2 and Metastore, based on Hadoop 3.3.5 and Hive 3.1.3 build on top of Ubuntu 20.04 and OpenJDK8.
 
 Ye... I think that will be a good start, and that will accomplish what we want to demostrate, a split source environment and using Apache Flink's CDC apabilities to ingest the data from the database and push it into a Flink Table's for further processing, joining with data from i.e: Kafka sources, a more pragmatic/realistic example.
 
