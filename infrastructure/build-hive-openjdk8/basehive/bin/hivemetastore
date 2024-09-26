@@ -1,0 +1,23 @@
+#!/bin/bash
+
+cd $HIVE_HOME/bin
+
+run_migrations(){
+  if schematool -dbType "postgres" -validate | grep 'Done with metastore validation' | grep '[SUCCESS]'; then
+    echo '--> Database OK'
+
+  else
+    # TODO: how to apply new version migrations or repair validation issues
+    schematool --verbose -dbType "postgres" -initSchema
+    schematool -dbType postgres -info
+    echo '--> Database Initialized: ${DATABASE_TYPE}'
+    
+    #hive --service schemaTool -initSchema -dbType postgres --verbose | true
+    #hive --service schemaTool -upgradeSchema -dbType postgres --verbose | true
+
+  fi
+}
+
+run_migrations
+
+./hive --service metastore

@@ -1,0 +1,131 @@
+
+configs:
+  hive-site:
+    file: ./conf/hive-site.xml
+
+services:
+    #
+  # S3-Amazon Compatible Object store.
+  # http://localhost:9001/browser
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
+    ports:
+      - 9001:9001 # Minio Console
+      - 9000:9000 # Minio Server
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - ./data/minio:/data     
+    # profiles:
+    #   - donotstart
+
+  # https://hub.docker.com/r/minio/mc
+  # Minio Console Client
+  mc:
+    image: minio/mc:latest
+    container_name: mc
+    hostname: mc
+    depends_on:
+      - minio
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add minio ${S3_ENDPOINT_URL} admin password) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc rm -r --force ${S3_BUCKET};
+      /usr/bin/mc mb ${S3_BUCKET};
+      tail -f /dev/null
+      " 
+
+  postgres:
+    image: ${REPO_NAME}/postgres-12.0:1.0.0
+    container_name: postgres
+    hostname: postgres
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_DB}
+    # healthcheck:
+    #   test: ["CMD", "psql", "-U", "${DATABASE_USER}", "${DATABASE_PASSWORD}"]
+    ports:
+      - 5432:5432
+    # profiles:
+    #   - donotstart
+
+  # Next up is the Apache HIVE Stack
+  #
+  # https://hive.apache.org
+  # https://nightlies.apache.org/flink/flink-docs-stable/docs/connectors/table/hive/overview/
+  #
+  # HIVE Metastore
+  # https://cwiki.apache.org/confluence/display/hive/design
+  
+  # https://hub.docker.com/r/apache/hive
+  # https://github.com/apache/hive
+  #
+  # https://hive.apache.org/developement/gettingstarted
+  #
+  
+  # Using HS2 with Standalone/Remote Metastore
+  # "-Dhive.metastore.uris is used to specify the external Metastore
+  # NOTE: To save the data between container restarts, you can start the HiveServer2 with mounted volume:
+  hiveserver2:
+    image: ${REPO_NAME}/hive-hiveserver2-3.1.3-java8:1.0.0
+    container_name: hiveserver2
+    hostname: hiveserver2
+    environment:
+      - SERVICE_NAME=hiveserver2
+      - IS_RESUME="true"
+    env_file:
+      - ./conf/hive.env
+    ports:
+      - 10000:10000   # Hive server2 port
+      - 10001:10001
+      - 10002:10002   # HiveServer2 Web UI
+    depends_on:
+      - metaserver
+    volumes:
+      - ./data/warehouse:/opt/hive/data/warehouse
+    command: hiveserver
+    # profiles:
+    #   - donotstart
+
+  # Launch Standalone Metastore With External RDBMS (Postgres/Oracle/MySql/MsSql)
+  # If you want to use your own core-site.xml/hdfs-site.xml/yarn-site.xml or hive-site.xml for the service, 
+  # you can provide the environment variable HIVE_CUSTOM_CONF_DIR for the command. For example:
+  # Put the custom configuration file under the directory /opt/hive/conf and run:
+  metaserver:
+    image: ${REPO_NAME}/hive-metastore-3.1.3-java8:1.0.0
+    container_name: metaserver
+    hostname: metaserver
+    #restart: on-failure
+    environment:
+      - SERVICE_NAME=metastore
+      - SERVICE_OPTS="-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore -Djavax.jdo.option.ConnectionUserName=${DATABASE_USER} -Djavax.jdo.option.ConnectionPassword=${DATABASE_PASSWORD}"
+      - DB_DRIVER=${DATABASE_TYPE_JDBC}
+      - IS_RESUME="true"
+    env_file:
+      - ./conf/hive.env
+    ports:
+      - 9083:9083   # Hive Metastore port
+    depends_on:
+      - postgres
+      - mc
+    volumes:
+      - ./data/warehouse:/opt/hive/data/warehouse
+    command: hivemetastore
+    # profiles:
+    #   - donotstart
+
+# Without a network explicitly defined, you hit this Hive/Thrift error
+# java.net.URISyntaxException Illegal character in hostname
+# https://github.com/TrivadisPF/platys-modern-data-platform/issues/231
+networks:
+  default:
+     name: ${COMPOSE_PROJECT_NAME}

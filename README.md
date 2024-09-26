@@ -55,10 +55,9 @@ The following steps are the process required to get the project up and running. 
 5. make buildall
 6. change into devlab
 7. make build
-8. make run
-9. make run  -> you might need to reco this one a couple of times until the stack is stable.
-10. make deploy
-11. make run_app
+8. make run  -> you might need to reco this one a couple of times until the stack is stable.
+9. make deploy -> if it fails here.. it's most probably going to be due to the metaserver/metastore not running, it's a quiark. just re-excute step 8 and then redo step 9
+10. make run_app
 
 ## Re Debezium
 

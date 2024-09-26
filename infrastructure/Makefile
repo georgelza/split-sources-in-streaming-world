@@ -31,10 +31,9 @@ help:
 	@echo "$$HELP"
 .PHONY: help
 
-pullall: os confluent flink db s3 misc
+pullall: os confluent flink db s3 misc hadoop hive
 
-#buildall: buildos buildopenjdk buildhadoop buildhive builddb buildflinkbase 
-buildall: buildos buildflinkbase builddb
+buildall: buildos buildflinkbase builddb buildopenjdk8 buildhive
 
 # Base images used along the way, used to build 2nd level images.
 # arm64/v8 used as base for all images except the app/*.
@@ -76,6 +75,16 @@ misc:
 	docker pull python:3.12-bookworm
 	docker pull codieplusplus/duckdb
 
+hadoop:
+	cd build-hive-openjdk8/basehadoop; mkdir stage; cd stage; wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5-aarch64.tar.gz
+
+hive:
+	cd build-hive-openjdk8/basehive; mkdir stage; cd  stage; wget https://downloads.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
+	cd build-hive-openjdk8/basehive; cd stage; wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5-aarch64.tar.gz
+	cd build-hive-openjdk8/basehive; cd stage; wget http://www.congiu.net/hive-json-serde/1.3.8/cdh5/json-serde-1.3.8-jar-with-dependencies.jar 
+	cd build-hive-openjdk8/basehive; cd stage; wget https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
+
+
 # Build images, not 100% all of whats needed, but these are all common images.
 buildos:
 	cd ./build-ubuntu-os-20.04; make build
@@ -85,3 +94,9 @@ buildflinkbase:
 
 builddb:
 	cd build-postgres-12.0; make build
+
+buildopenjdk8:
+	cd build-ubuntu-os-openjdk8; make build
+
+buildhive:
+	cd build-hive-openjdk8; make build

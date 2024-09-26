@@ -39,11 +39,12 @@ build:
 
 run:
 	docker compose -p devlab up -d broker schema-registry control-center connect \
-		ksqldb-server ksqldb-cli kcat \
-		flink-jobmanager flink-taskmanager flink-sql-client postgres hive-metastore \
+		ksqldb-server ksqldb-cli \
 		minio mc \
+		flink-jobmanager flink-taskmanager flink-sql-client \
+		postgres metaserver hiveserver2 \
 		mysqlcdc postgrescdc mongodb
-# pyiceberg duckdb 
+# pyiceberg duckdb kcat
 
 deploy: createtopics createcat deploycdcflink deployflink
 
@@ -72,11 +73,11 @@ down:
 	docker compose down
 	cd data; rm -rf minio 
 	cd data; rm -rf mongodb 
-	cd data; rm -rf paradedb 
 	cd data; rm -rf postgres
 	cd data; rm -rf postgrescdc
 	cd data; rm -rf mysqlcdc
 	cd data; rm -rf mongodb
+	cd data; rm -rf warehouse
 
 ps:
 	docker compose ps

@@ -169,7 +169,7 @@ services:
     container_name: flink-jobmanager
     hostname: flink-jobmanager
     depends_on:
-      - hive-metastore
+      - hiveserver2
     ports:
       - 8081:8081     # -> Web UI console
     environment:
@@ -337,35 +337,57 @@ services:
     command: -c config_file=/etc/postgresql/postgresql.conf
 
 
-  # Catalog for Flink -> Hive Metastore - Standalone
-  #
-  # https://hub.docker.com/r/naushadh/hive-metastore
-  # https://github.com/naushadh/hive-metastore/tree/main
-  # https://github.com/naushadh/hive-metastore/blob/main/Dockerfile
-  #
-  # Hive Metastore 3.0.0
-  # HADOOP_VERSION=3.3.0
-  # POSTGRES_CONNECTOR_VERSION=42.2.18
-  hive-metastore:
-    image: naushadh/hive-metastore:latest
-    container_name: hms
-    hostname: hms
+  # Hive Metastore 3.1.3
+  # HADOOP_VERSION=3.3.5
+  # POSTGRES_CONNECTOR_VERSION=42.7.3
+
+  # Using HS2 with Standalone/Remote Metastore
+  # "-Dhive.metastore.uris is used to specify the external Metastore
+  # NOTE: To save the data between container restarts, you can start the HiveServer2 with mounted volume:
+  hiveserver2:
+    image: ${REPO_NAME}/hive-hiveserver2-3.1.3-java8:1.0.0
+    container_name: hiveserver2
+    hostname: hiveserver2
+    environment:
+      - SERVICE_NAME=hiveserver2
+      - IS_RESUME="true"
+    env_file:
+      - ./conf/hive.env
+    ports:
+      - 10000:10000   # Hive server2 port
+      - 10001:10001
+      - 10002:10002   # HiveServer2 Web UI
+    depends_on:
+      - metaserver
+    volumes:
+      - ./data/warehouse:/opt/hive/data/warehouse
+    command: hiveserver
+
+
+  # Launch Standalone Metastore With External RDBMS (Postgres/Oracle/MySql/MsSql)
+  # If you want to use your own core-site.xml/hdfs-site.xml/yarn-site.xml or hive-site.xml for the service, 
+  # you can provide the environment variable HIVE_CUSTOM_CONF_DIR for the command. For example:
+  # Put the custom configuration file under the directory /opt/hive/conf and run:
+  metaserver:
+    image: ${REPO_NAME}/hive-metastore-3.1.3-java8:1.0.0
+    container_name: metaserver
+    hostname: metaserver
+    environment:
+      - SERVICE_NAME=metastore
+      - SERVICE_OPTS="-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:${DATABASE_TYPE_JDBC}://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB} -Djavax.jdo.option.ConnectionUserName=${DATABASE_USER} -Djavax.jdo.option.ConnectionPassword=${DATABASE_PASSWORD}"
+      - DB_DRIVER=${DATABASE_TYPE_JDBC}
+      - IS_RESUME="true"
+    env_file:
+      - ./conf/hive.env
+    ports:
+      - 9083:9083   # Hive Metastore port
     depends_on:
       - postgres
       - mc
-    environment:
-      - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_PORT=${DATABASE_PORT}
-      - DATABASE_DB=${DATABASE_DB}
-      - DATABASE_USER=${DATABASE_USER}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
-      - S3_PREFIX=${S3_PREFIX}
-      - S3_BUCKET=${S3_BUCKET}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    ports:
-      - 9083:9083
+    volumes:
+      - ./data/warehouse:/opt/hive/data/warehouse
+    command: hivemetastore
+
 
 
   # Reconsider
