@@ -43,7 +43,7 @@ run:
 		flink-jobmanager flink-taskmanager flink-sql-client postgres hive-metastore \
 		minio mc \
 		mysqlcdc postgrescdc mongodb
-#mongodb pyiceberg duckdb 
+# pyiceberg duckdb 
 
 deploy: createtopics createcat deploycdcflink deployflink
 

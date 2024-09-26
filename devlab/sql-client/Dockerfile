@@ -25,7 +25,6 @@ RUN echo "--> Creating SQL Client directories" && \
 RUN echo "--> Install JARs: Flink's Kafka connector" && \
     mkdir -p ./lib/kafka && pushd $_ && \
     curl https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.2.0-1.18/flink-sql-connector-kafka-3.2.0-1.18.jar -O && \
-    curl https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-hive-3.0.0_2.12/1.18.1/flink-sql-connector-hive-3.0.0_2.12-1.18.1.jar -O && \
     curl https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-json/1.18.1/flink-sql-json-1.18.1.jar -O && \
     curl https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-avro/1.18.1/flink-sql-avro-1.18.1.jar -O && \
     curl https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-parquet/1.18.1/flink-sql-parquet-1.18.1.jar -O && \
