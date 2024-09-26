@@ -12,10 +12,10 @@ The original article had a Golang application posting 2 json documents from a fa
 
 On 27 Aug 2024 - I had a chat wit a friend and got a friendly request. Let's take the original article and extend it only such a small/ little bit, Lets show the capabilities of Flink CDC to injest data. Basically, we're going to split the 2 source streams.
 
- - The salesbasket will still go onto Kafka, 
- - And then secondly, the associated Salespayments document/record will be pushed into a database (MySQL). From here will then configure Flink CDC to pull/source the data from the database and push it into a Flink Table (as per original article, avro_salespayments).
+ - The salesbasket will still go onto Kafka topic, 
+ - And then secondly, the associated Salespayments document/record will be pushed into a database (MySQL). From here will then configure Flink CDC (and build in Debezium capability) to pull/source the data from the database and push it into a Flink Table (as per original article, salespayments).
  - As per the original article we will now join the 2 streams together, created salescompleted record set.
-
+ - We will then use this salescompleted record set to created a unnested_sales table, after which we will push everything into a Paimon tables.
 
 For reference see the blog-doc/diagram's folder for some diagrams depicting the flow of data.
 
@@ -60,26 +60,14 @@ The following steps are the process required to get the project up and running. 
 10. make deploy
 11. make run_app
 
+## Re Debezium
+
+Debezium is a distributed platform that turns your existing databases into event streams, so applications can see and respond almost instantly to each committed row-level change in the databases. Debezium is built on top of Kafka and provides Kafka Connect compatible connectors that monitor specific database management systems. The event streams produced exposes changes in your databases as Kafka topics. 
+
 
 ## Credits... due.
 
 Without these guys and their willingness to entertain allot of questions and some times siply dumb ideas and helping me slowly onto the right path all of this would simply not have been possible.
-
-    Dave Troiano,
-        Apache Kafka or Confluent Kafka :
-        (Developer support on Confluent Forum @dtroiano),
-        https://www.linkedin.com/in/dave-troiano-49a8932/
-
-
-    Barry Evans, 
-        Someone that I consider a friend, just stepped in, starting helping me and as he happily calls it his community service. Helping others figure problems out that they have, whatever the nature, and another always curious mind himself.
-        https://confluentcommunity.slack.com/team/U04UNKMRL4U
-
-
-    Martijn Visser,
-        Apache Flink Slack Community
-        (PMC and Committer for Apache Flink, Product Manager at Confluent)
-        https://apache-flink.slack.com/team/U03GADV9USX
 
 
     Ben Gamble,
@@ -90,16 +78,20 @@ Without these guys and their willingness to entertain allot of questions and som
 
     Ian Engelbrecht,
         VeeAM
-        (Manager , Technical Sales at Veeam Software English Africa)
+        (Manager, Technical Sales at Veeam Software English Africa)
         https://www.linkedin.com/in/ian-veeam/
 
 
 ## NOTES:
 
+
 ### Misc Reading Resources:
 
-- [Apache Paimon: Introducing Deletion Vectors](https://medium.com/@ipolyzos_/apache-paimon-introducing-deletion-vectors-584666ee90de) - Good article that covers how Paimon Table format works...
+- [Apache Paimon: Introducing Deletion Vectors](https://medium.com/@ipolyzos_/apache-paimon-introducing-deletion-vectors-584666ee90de) 
 
+- Good article that covers how Paimon Table format works...
+
+- Interesting read re Debezium, by the main custodium for last many... ;) yrs. [Change Data Capture Breaks Encapsulation”. Does it, though](https://www.decodable.co/blog/change-data-capture-breaks-encapsulation-does-it-though)
 
 
 

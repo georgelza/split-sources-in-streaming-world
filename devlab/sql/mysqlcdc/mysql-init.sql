@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS sales.salespayments(
         `payTimestamp_Epoc`     text,
         `paid`                  double,
         `finTransactionId`      text, 
-        created_at datetime default CURRENT_TIMESTAMP,
+        created_at              datetime default CURRENT_TIMESTAMP,
         CONSTRAINT PK_Salespayments PRIMARY KEY (`invoiceNumber`)
         );
 
