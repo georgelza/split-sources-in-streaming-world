@@ -87,9 +87,7 @@ Without these guys and their willingness to entertain allot of questions and som
 
 ### Misc Reading Resources:
 
-- [Apache Paimon: Introducing Deletion Vectors](https://medium.com/@ipolyzos_/apache-paimon-introducing-deletion-vectors-584666ee90de) 
-
-- Good article that covers how Paimon Table format works...
+- Good article that covers how Paimon Table format works... [Apache Paimon: Introducing Deletion Vectors](https://medium.com/@ipolyzos_/apache-paimon-introducing-deletion-vectors-584666ee90de) 
 
 - [Debezium Architecture](https://debezium.io/documentation/reference/stable/architecture.html)
 - [Overview of Debezium](https://docs.redhat.com/en/documentation/red_hat_integration/2022.q3/html/getting_started_with_debezium/introduction-debezium)
