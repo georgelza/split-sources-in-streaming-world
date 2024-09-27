@@ -8,7 +8,7 @@
  
   <property>
     <name>hive.metastore.uris</name>
-    <value>thrift://metaserver:9083</value>
+    <value>thrift://metastore:9083</value>
   </property>
 
     <property>

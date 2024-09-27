@@ -42,7 +42,7 @@ run:
 		ksqldb-server ksqldb-cli \
 		minio mc \
 		flink-jobmanager flink-taskmanager flink-sql-client \
-		postgres metaserver hiveserver2 \
+		postgres metastore hiveserver2 \
 		mysqlcdc postgrescdc mongodb
 # pyiceberg duckdb kcat
 

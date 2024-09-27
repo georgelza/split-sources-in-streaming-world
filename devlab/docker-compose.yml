@@ -312,11 +312,12 @@ services:
       " 
 
 
-  # Datastore for Hive Metastore - Standalone 
+  # Datastore for Hive Metastore 
   postgres:
     image: ${REPO_NAME}/postgres-12.0:1.0.0
     container_name: postgres
     hostname: postgres
+    restart: unless-stopped
     ports:
       - ${DATABASE_PORT}:5432
     environment:
@@ -348,11 +349,12 @@ services:
     image: ${REPO_NAME}/hive-hiveserver2-3.1.3-java8:1.0.0
     container_name: hiveserver2
     hostname: hiveserver2
+    restart: unless-stopped
     environment:
       - SERVICE_NAME=hiveserver2
       - IS_RESUME="true"
       - SERVICE_OPTS='-Xmx512m 
-                    -Dhive.metastore.uris=thrift://metaserver:9083'
+                    -Dhive.metastore.uris=thrift://metastore:9083'
     env_file:
       - ./conf/hive.env
     ports:
@@ -360,7 +362,7 @@ services:
       - 10001:10001
       - 10002:10002   # HiveServer2 Web UI
     depends_on:
-      - metaserver
+      - metastore
     volumes:
       - ./data/warehouse:/opt/hive/data/warehouse
     command: hiveserver
@@ -370,10 +372,11 @@ services:
   # If you want to use your own core-site.xml/hdfs-site.xml/yarn-site.xml or hive-site.xml for the service, 
   # you can provide the environment variable HIVE_CUSTOM_CONF_DIR for the command. For example:
   # Put the custom configuration file under the directory /opt/hive/conf and run:
-  metaserver:
+  metastore:
     image: ${REPO_NAME}/hive-metastore-3.1.3-java8:1.0.0
-    container_name: metaserver
-    hostname: metaserver
+    container_name: metastore
+    hostname: metastore
+    restart: unless-stopped
     environment:
       SERVICE_NAME: metastore
       DB_DRIVER: ${DATABASE_TYPE_JDBC}
