@@ -351,7 +351,7 @@ services:
     environment:
       - SERVICE_NAME=hiveserver2
       - IS_RESUME="true"
-      - SERVICE_OPTS='-Xmx1G 
+      - SERVICE_OPTS='-Xmx512m 
                     -Dhive.metastore.uris=thrift://metaserver:9083'
     env_file:
       - ./conf/hive.env
@@ -378,7 +378,7 @@ services:
       SERVICE_NAME: metastore
       DB_DRIVER: ${DATABASE_TYPE_JDBC}
       IS_RESUME: "true"
-      SERVICE_OPTS: '-Xmx1G 
+      SERVICE_OPTS: '-Xmx512m 
                     -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
                     -Djavax.jdo.option.ConnectionURL=jdbc:${DATABASE_TYPE_JDBC}://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB}?sslmode=disable
                     -Djavax.jdo.option.ConnectionUserName=${DATABASE_USER}
