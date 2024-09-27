@@ -1,11 +1,19 @@
 
 # Data Flows
 
-1. creCat create the 2 cataloges, c_hive and c_paimon
+1. creCat create the 2 cataloges and their containing databases
+
+- c_hive and DB: db01
+- c_paimon and DB: dev
 
 2. creCdc.sql create the source CDC links pointing to MySqlDB and/or PostgreSQLDB
 
+- c_hive.db01.t_f_msqlcdc_salespayments
+- c_hive.db01.t_f_pgcdc_salespayments
+
 ## Primary data flow:
+
+We can now build our streaming pipeline.
 
 - creFlink.sql
 
